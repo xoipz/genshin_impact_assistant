@@ -82,6 +82,8 @@ class CommissionParser():
                         
                     if com_type is None:
                         continue
+                    elif self.detection(detected=list(target_tianli_posi)):
+                        continue
                     else:
                         self.commission_dicts.append({
                             "type":com_type,
@@ -152,7 +154,22 @@ class CommissionParser():
     #             if euclidean_distance(i, COMMISSION_INDEX[ii]["position"]) <= 30:
     #                 commission_objects.append(ii)
     #     return commission_objects
-                    
+
+    # TODO:不进行委托的基本地点
+    def detection(self, detected, tolerance=10):
+        targets = [[376, -6342], [2096, -4825], [4053, -4376]]  # 示例目标点
+
+        # 检查detected值是否在任何一个目标值的误差范围内
+        for target in targets:
+            distance = (abs(target[0] - detected[0]) < tolerance) and (abs(target[1] - detected[1]) < tolerance)
+            print("找到任务点:", detected)
+            print(distance, target[0], abs(target[0] - detected[0]), abs(target[1] - detected[1]))
+
+            if distance:
+                return True  # 如果在误差范围内，返回True
+
+        return False  # 如果检查完所有目标点都不在误差范围内，返回False
+
             
 if __name__ == '__main__':
     cp = CommissionParser()
