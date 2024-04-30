@@ -48,3 +48,4 @@ scikit-learn
 requests
 dataclasses
 psutil
+cached_property
