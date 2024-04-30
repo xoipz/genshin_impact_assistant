@@ -1,3 +1,10 @@
+import sys
+import os
+current_file_path = __file__
+directory_path = os.path.dirname(current_file_path)
+root_path = os.path.join(directory_path,"..","..")
+sys.path.append(root_path)
+
 from source.commission.commission_template import CommissionTemplate, LanguageError
 from source.manager.asset import Text
 from source.commission.assets import *
