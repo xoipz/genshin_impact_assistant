@@ -176,8 +176,10 @@ class DomainTask(TaskTemplate):
 if __name__ == '__main__':
     focus_on_program("原神")
     dmt = DomainTask()
-    dmt._enter_domain()
+    dmt.start()
+    # dmt._enter_domain()
     # dmt.flow_mode = TI.DT_IN_DOMAIN
-    while 1:
-        time.sleep(0.2)
-        dmt.start()
+    # while 1:
+    #     time.sleep(0.2)
+    #     dmt.start()
+
