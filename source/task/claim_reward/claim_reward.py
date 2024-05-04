@@ -1,5 +1,8 @@
 import sys
 import os
+
+from utils.windowUtils import focus_on_program
+
 current_file_path = __file__
 directory_path = os.path.dirname(current_file_path)
 root_path = os.path.join(directory_path,"..","..","..")
@@ -117,10 +120,11 @@ class ClaimRewardTask(TaskTemplate):
     
     def task_run(self):
         self.blocking_startup(self.CRM)
-        
+
+# FIXME:ClaimReward
 if __name__ == '__main__':
+    focus_on_program("原神")
     crm = ClaimRewardMission()
     r = crm._exec_dispatch()
-    print()
     crt = ClaimRewardTask()
     crt.start()

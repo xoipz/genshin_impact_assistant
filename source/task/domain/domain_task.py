@@ -13,6 +13,7 @@ from source.task import task_id as TI
 from source.funclib.err_code_lib import ERR_NONE, ERR_STUCK, ERR_PASS
 from source.common import timer_module
 from source.flow.utils.cvars import *
+from utils.windowUtils import focus_on_program
 
 
 class DomainTask(TaskTemplate):
@@ -165,8 +166,9 @@ class DomainTask(TaskTemplate):
             
             self._end_domain()
             
-            
+# FIXME:domain
 if __name__ == '__main__':
+    focus_on_program("原神")
     dmt = DomainTask()
     dmt._enter_domain()
     # dmt.flow_mode = TI.DT_IN_DOMAIN

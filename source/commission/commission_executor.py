@@ -1,5 +1,8 @@
 import sys
 import os
+
+from utils.windowUtils import focus_on_program
+
 current_file_path = __file__
 directory_path = os.path.dirname(current_file_path)
 root_path = os.path.join(directory_path,"..","..")
@@ -47,15 +50,19 @@ class CommissionExecutor(TaskTemplate, CommissionParser):
             self.pause_threading()
         if len(self.commission_dicts)==0:
             logger.info(t2t("Cannot find any commissions, Commission Task end."))
-            self.pause_threading()
+            self.stop_threading()
         if self.exec_times >= self.EXEC_LIMIT:
             logger.info(t2t("Number of executions exceeding the limit, Commission Task end."))
             self.pause_threading()
         self.exec_times+=1
 
+# FIXME:Commission
 if __name__ == '__main__':
+    print('启动')
+    focus_on_program("原神")
     ce = CommissionExecutor()
     ce.start()
     ce.continue_threading()
-    while 1:
+    while not ce.stop_threading_flag:
         time.sleep(1)
+    print("Task end")
