@@ -8,24 +8,23 @@ from source.manager import asset
 from source.api.pdocr_complete import ocr
 from source.common.timer_module import FileTimer
 
+
 # 从大地图寻找委托
 # 看不懂也没关系,反正也没啥影响,能跑就行(
 
 class CommissionParser():
-    TRAVERSE_MONDSTADT_POSITION=[TianLiPosition([783.450352, -6943.497652]),
-                                 TianLiPosition([2489.331552, -6101.094052]),
-                                 TianLiPosition([3101.988752, -6431.458452]),
-                                 TianLiPosition([2860.607952, -5526.280452]),
-                                 TianLiPosition([2289.885552, -5515.029652]),
-                                 TianLiPosition([1698.707152, -5273.648852]),
-                                 TianLiPosition([2224.426352, -4798.046852]),
-                                 TianLiPosition([2156.921552, -3923.552852]),
-                                 TianLiPosition([2423.872352, -3427.494852]),
-                                 TianLiPosition([3367.916752, -4196.640452]),
-                                 TianLiPosition([3328.027552, -5106.932452])]
-    
-    
-    
+    TRAVERSE_MONDSTADT_POSITION = [TianLiPosition([783.450352, -6943.497652]),
+                                   TianLiPosition([2489.331552, -6101.094052]),
+                                   TianLiPosition([3101.988752, -6431.458452]),
+                                   TianLiPosition([2860.607952, -5526.280452]),
+                                   TianLiPosition([2289.885552, -5515.029652]),
+                                   TianLiPosition([1698.707152, -5273.648852]),
+                                   TianLiPosition([2224.426352, -4798.046852]),
+                                   TianLiPosition([2156.921552, -3923.552852]),
+                                   TianLiPosition([2423.872352, -3427.494852]),
+                                   TianLiPosition([3367.916752, -4196.640452]),
+                                   TianLiPosition([3328.027552, -5106.932452])]
+
     def __init__(self) -> None:
         self.commission_dicts = []
 
@@ -39,26 +38,27 @@ class CommissionParser():
             ui_control.ensure_page(UIPages.page_bigmap)
             # genshin_map._switch_to_area("Mondstadt")
             genshin_map.get_bigmap_posi()
-            genshin_map._move_bigmap(posi.tianli, force_center = True)
-            cap_posi = [220,240,1920-200,1080-150]
+            genshin_map._move_bigmap(posi.tianli, force_center=True)
+            cap_posi = [220, 240, 1920 - 200, 1080 - 150]
             img = itt.capture(jpgmode=NORMAL_CHANNELS)
             img = crop(img, cap_posi)
-            img = recorp(img,cap_posi)
+            img = recorp(img, cap_posi)
             positions = match_multiple_img(img, template=asset.IconBigmapCommission.image)
-            if len(positions)>0:
+            if len(positions) > 0:
                 curr_posi = genshin_map.get_bigmap_posi()
                 for i in positions:
-                    target_px_posi = np.array(list(i))+np.array([8,8])
-                    delta_posi = genshin_map.convert_InGenshinMapPX_to_GIMAP(target_px_posi-np.array([SCREEN_CENTER_X,SCREEN_CENTER_Y]))
+                    target_px_posi = np.array(list(i)) + np.array([8, 8])
+                    delta_posi = genshin_map.convert_InGenshinMapPX_to_GIMAP(
+                        target_px_posi - np.array([SCREEN_CENTER_X, SCREEN_CENTER_Y]))
                     target_gimap_posi = curr_posi.gimap + delta_posi
                     target_tianli_posi = GIMAPPosition(target_gimap_posi).tianli
-                    
-                    if len(commission_positions)>0:
+
+                    if len(commission_positions) > 0:
                         if not min(euclidean_distance_plist(target_tianli_posi, commission_positions)) >= 60:
                             continue
                     commission_positions.append(target_tianli_posi)
-                    
-                    itt.move_and_click([list(i)[0]+8, list(i)[1]+8]) # 修正
+
+                    itt.move_and_click([list(i)[0] + 8, list(i)[1] + 8])  # 修正
                     itt.delay("animation")
                     for i in range(3):
                         com_type = self._detect_commission_type()
@@ -67,7 +67,7 @@ class CommissionParser():
                         else:
                             itt.delay("2animation")
                     itt.delay("animation")
-                    
+
                     while 1:
                         itt.key_press('esc')
                         itt.delay("2animation")
@@ -79,20 +79,20 @@ class CommissionParser():
                             genshin_map.get_bigmap_posi()
                             genshin_map._switch_to_area("Mondstadt")
                             break
-                        
+
                     if com_type is None:
                         continue
                     elif self.detection(detected=list(target_tianli_posi)):
                         continue
                     else:
                         self.commission_dicts.append({
-                            "type":com_type,
-                            "position":list(target_tianli_posi),
-                            "done":False
+                            "type": com_type,
+                            "position": list(target_tianli_posi),
+                            "done": False
                         })
                         logger.info(f"commission has been added: {self.commission_dicts[-1]}")
         return self.commission_dicts
-    
+
     def _set_and_save_and_load_commission_dicts(self) -> bool:
         """扫描/加载委托(如果有未完成的委托)
         
@@ -102,46 +102,47 @@ class CommissionParser():
             bool: 是否可以继续执行
         """
         g4t = FileTimer("daily_commission")
-        if g4t.get_diff_time()>=3600:
+        if g4t.get_diff_time() >= 3600:
             logger.info(f"new genshin day, traverse mondstant commissions")
             self.traverse_mondstant()
-            save_json(self.commission_dicts, json_name="commission_dict.json", default_path=rf"{CONFIG_PATH}\commission")
+            save_json(self.commission_dicts, json_name="commission_dict.json",
+                      default_path=rf"{CONFIG_PATH}\commission")
             g4t.reset()
             return True
         else:
-            self.commission_dicts = load_json(json_name="commission_dict.json", folder_path=rf"{CONFIG_PATH}\commission")
+            self.commission_dicts = load_json(json_name="commission_dict.json",
+                                              folder_path=rf"{CONFIG_PATH}\commission")
             for i in self.commission_dicts:
                 if i["done"] != True:
                     return False
             logger.info(f"commission dicts all have been done. researching.")
             self.traverse_mondstant()
-            save_json(self.commission_dicts, json_name="commission_dict.json", default_path=rf"{CONFIG_PATH}\commission")
+            save_json(self.commission_dicts, json_name="commission_dict.json",
+                      default_path=rf"{CONFIG_PATH}\commission")
             return True
-        
-    def _detect_commission_type(self)->str:
+
+    def _detect_commission_type(self) -> str:
         img = itt.capture(jpgmode=NORMAL_CHANNELS)
         img_choose = crop(img.copy(), asset.AreaBigmapChoose.position)
         img_sidebar = crop(img.copy(), asset.AreaBigmapSidebarCommissionName.position)
-        
-        if itt.get_img_existence(asset.IconBigmapSidebarIsCommissionExist, cap = img_sidebar):
+
+        if itt.get_img_existence(asset.IconBigmapSidebarIsCommissionExist, cap=img_sidebar):
             ocr_res = ocr.get_all_texts(img_sidebar)
         else:
             ocr_res = ocr.get_all_texts(img_choose)
-        
+
         for ocr_i in ocr_res:
             for com_i in COMMISSION_NAMES:
                 if com_i.text in ocr_i:
                     return com_i.name
-        
+
         logger.warning(f"Unknown commission type: {ocr_res}")
-        
-        
+
         return None
-        
-    
+
     def get_commissions_list(self):
         return self._set_and_save_and_load_commission_dicts()
-      
+
     # def get_commission_objects(self):
     #     if len(self.commission_dicts) == 0:
     #         self.traverse_mondstant()
@@ -157,7 +158,7 @@ class CommissionParser():
 
     # TODO:不进行委托的基本地点
     def detection(self, detected, tolerance=10):
-        targets = [[376, -6342], [2096, -4825], [4053, -4376]]  # 示例目标点
+        targets = [[376, -6342], [2096, -4825], [4053, -4376], [2986, -6160]]  # 示例目标点
 
         # 检查detected值是否在任何一个目标值的误差范围内
         for target in targets:
@@ -170,7 +171,7 @@ class CommissionParser():
 
         return False  # 如果检查完所有目标点都不在误差范围内，返回False
 
-            
+
 if __name__ == '__main__':
     cp = CommissionParser()
     # cp.commission_dicts.append([-999,999])
