@@ -4,4 +4,4 @@ cd /d %~dp0
 
 :: 运行 Python 脚本，使用相对路径指定 Python 解释器和脚本文件的位置
 set PYTHONIOENCODING=utf8
-call ..\venv\Scripts\python.exe ..\source\commission\commission_executor.py
+call ..\venv\Scripts\python.exe .\py\commission.py
