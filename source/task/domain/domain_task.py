@@ -118,7 +118,8 @@ class DomainTask(TaskTemplate):
             self.dfc.reset()
             
         else:
-            logger.info(t2t('次数结束。退出秘境'))
+            logger.info(t2t('次数结束。退出秘境,退出原神'))
+            kill_YuanShen()
             # logger.info('no more times. exit domain.')
             while 1:
                 if self.checkup_stop_func():return
@@ -129,6 +130,8 @@ class DomainTask(TaskTemplate):
             # exit all threads
             self.pause_threading()
             time.sleep(10)
+
+
 
     def _check_state(self):
         
@@ -171,7 +174,10 @@ class DomainTask(TaskTemplate):
                     break
             
             self._end_domain()
-            
+
+def kill_YuanShen():
+    os.system("taskkill /f /im YuanShen.exe")
+   # 退出原神
 # FIXME:domain
 if __name__ == '__main__':
     focus_on_program("原神")
