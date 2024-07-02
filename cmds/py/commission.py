@@ -13,16 +13,16 @@ from source.task.claim_reward.claim_reward import ClaimRewardMission, ClaimRewar
 from utils.windowUtils import focus_on_program
 
 if __name__ == '__main__':
-    # print('启动')
-    # focus_on_program("原神")
-    # ce = CommissionExecutor()
-    # ce.start()
-    # ce.continue_threading()
-    # while not ce.stop_threading_flag:
-    #     time.sleep(1)
-    # print("日常 Task end")
+    print('启动')
+    focus_on_program("原神")
+    ce = CommissionExecutor()
+    ce.start()
+    ce.continue_threading()
+    while not ce.stop_threading_flag:
+        time.sleep(1)
+    print("日常 Task end")
 
-    # focus_on_program("原神")
+    focus_on_program("原神")
     crm = ClaimRewardMission()
     r = crm._exec_dispatch()
     crt = ClaimRewardTask()
