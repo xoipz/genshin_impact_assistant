@@ -119,7 +119,7 @@ class DomainTask(TaskTemplate):
             
         else:
             logger.info(t2t('次数结束。退出秘境,退出原神'))
-            kill_YuanShen()
+            # kill_YuanShen()
             # logger.info('no more times. exit domain.')
             while 1:
                 if self.checkup_stop_func():return
