@@ -158,4 +158,4 @@ ui_control = UI()
 
 if __name__ == '__main__':
     ui = UI()
-    ui.ui_goto(page_bigmap)
+    ui.ui_goto(page_main)

@@ -65,4 +65,4 @@ if __name__ == '__main__':
     ce.continue_threading()
     while not ce.stop_threading_flag:
         time.sleep(1)
-    print("Task end")
+    print("Commission Task end")
