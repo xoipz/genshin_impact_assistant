@@ -537,7 +537,7 @@ class TeyvatMove_FollowPath(FlowTemplate, TeyvatMoveCommon):
         
         # 更新BP和CP
         while 1: 
-            print(f"time0.1: {self.in_pt.get_diff_time()}")
+            # print(f"time0.1: {self.in_pt.get_diff_time()}")
             target_posi = self.curr_breaks[self.curr_break_point_index]
             curr_posi = genshin_map.get_position()
                     
@@ -630,7 +630,7 @@ class TeyvatMove_FollowPath(FlowTemplate, TeyvatMoveCommon):
             
             # print(f"time0.3: {self.in_pt.get_diff_time()}")
         
-        print(f"time1: {self.in_pt.get_diff_time()}")
+        # print(f"time1: {self.in_pt.get_diff_time()}")
         
         
         # 动作识别
@@ -668,7 +668,7 @@ class TeyvatMove_FollowPath(FlowTemplate, TeyvatMoveCommon):
         if self.curr_path[self.curr_path_index]["motion"]=="ANY":
             movement.jump_in_loop()
         
-        print(f"time2: {self.in_pt.get_diff_time()}")
+        # print(f"time2: {self.in_pt.get_diff_time()}")
         
         def is_ads(threshold):
             return min(euclidean_distance_plist(curr_posi, self.adsorptive_position)) < threshold
@@ -692,7 +692,7 @@ class TeyvatMove_FollowPath(FlowTemplate, TeyvatMoveCommon):
         # self._exec_active_pickup()
         curr_posi = genshin_map.get_position()
         
-        print(f"time3: {self.in_pt.get_diff_time()}")
+        # print(f"time3: {self.in_pt.get_diff_time()}")
         
         # 自动拾取
         if self.upper.is_auto_pickup:
@@ -719,7 +719,7 @@ class TeyvatMove_FollowPath(FlowTemplate, TeyvatMoveCommon):
         if r:
             self._next_rfc()
         
-        print(f"time4: {self.in_pt.get_diff_time()}")
+        # print(f"time4: {self.in_pt.get_diff_time()}")
         
         # 输出日志
         logger.debug(f"next break position distance: {euclidean_distance(target_posi, curr_posi)}")
@@ -761,7 +761,7 @@ class TeyvatMove_FollowPath(FlowTemplate, TeyvatMoveCommon):
         # w
         self.auto_w(curr_posi)
         
-        print(f"time5: {self.in_pt.get_diff_time()}")
+        # print(f"time5: {self.in_pt.get_diff_time()}")
         
     def state_after(self):
         self.next_flow_id = self.flow_id
