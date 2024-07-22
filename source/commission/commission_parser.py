@@ -143,19 +143,6 @@ class CommissionParser():
     def get_commissions_list(self):
         return self._set_and_save_and_load_commission_dicts()
 
-    # def get_commission_objects(self):
-    #     if len(self.commission_dicts) == 0:
-    #         self.traverse_mondstant()
-    #     if len(self.commission_dicts) == 0:
-    #         return False
-    #     commission_objects = []
-    #     # commission_index_positions = [COMMISSION_INDEX[i]["position"] for i in COMMISSION_INDEX]
-    #     for i in self.commission_dicts:
-    #         for ii in COMMISSION_INDEX:
-    #             if euclidean_distance(i, COMMISSION_INDEX[ii]["position"]) <= 30:
-    #                 commission_objects.append(ii)
-    #     return commission_objects
-
     # TODO:不进行委托的基本地点
     def detection(self, detected, tolerance=10):
         targets = [[376, -6342], [2096, -4825], [4053, -4376], [2986, -6160], [895, -5322], [3726, -3750]]  # 示例目标点
