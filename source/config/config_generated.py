@@ -36,3 +36,4 @@ class GeneratedConfig:
    Dev_RecordPath_CollectionType = 'Plant'
    Dev_RecordPath_CollectionName = ''
    Dev_DisableF = False
+   Dev_UseAllPositionToCorrectionWhenItemNameNotFound = True
