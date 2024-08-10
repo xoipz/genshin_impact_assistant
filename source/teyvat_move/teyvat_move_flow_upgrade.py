@@ -31,7 +31,7 @@ class TeyvatMoveFlowConnector(FlowConnector):
     def __init__(self):
         super().__init__()
         self.checkup_stop_func = None
-        self.stop_rule = 0
+        self.stop_rule = STOP_RULE_ARRIVE
         self.target_posi = [0, 0]
         self.reaction_to_enemy = 'RUN'
         self.MODE = "PATH"

@@ -89,7 +89,7 @@ def angle2movex(angle):
     return cvn
 
 def angle2movex_v2(angle):
-    cvn = angle * 12  # 10: magic num, test from test246.py
+    cvn = angle * 10  # 10: magic num, test from test246.py
     return cvn
 
 def cview(angle=10, mode=HORIZONTAL, rate=0.9, use_CVDC = False):  # left<0,right>0
@@ -191,7 +191,7 @@ class CViewDynamicCalibration:
             os.remove(self.CVDC_PREPROCESSED_CACHE)
 
     def __init__(self):
-        self.available_angles = list(range(10, 180, 5))
+        self.available_angles = list(range(1, 10)) + list(range(10, 180, 5))
         self.CVDC_CACHE = f'{CACHE_PATH}\\cvdc_2.json'
         self.CVDC_PREPROCESSED_CACHE = f'{CACHE_PATH}\\cvdc_preprocessed_2.json'
         self.append_times = 0
@@ -207,11 +207,20 @@ class CViewDynamicCalibration:
                     self.preprocessed_id.append(i)
 
     def calibration_cvdc(self):
-        genshin_map.reinit_smallmap()
+        if True:
+            from source.teyvat_move.teyvat_move_flow_upgrade import TeyvatMoveFlowController
+            _ = TeyvatMoveFlowController()
+            _.set_parameter(MODE="AUTO", target_posi=[ 3321.088,-5110.272], is_tp=False, is_auto_pickup=False)
+            _.start_flow()
+            _.start()
+
+            while 1:
+                siw()
+                if _.is_thread_paused(): break
         self.clean_CACHE()
         self.__init__()
-        for ts in range(10):
-            for i in range(0, 2000, 50):
+        for ts in range(15):
+            for i in list(range(0, 100, 10)) + list(range(100, 2000, 50)):
                 direct_cview(i)
                 time.sleep(0.2)
                 change_view_to_angle(90, offset=1.5, maxloop= 100, edit_cvdc=True)
@@ -455,7 +464,7 @@ def get_current_motion_state() -> str:
 def get_move_duration(distance:float):
     return min(distance * 0.1, 0.8)
 
-def move_to_posi_LoopMode(target_posi, stop_func, threshold:float=6):
+def move_to_posi_LoopMode(target_posi, stop_func, threshold:float=6, fast_move = True):
     """移动到指定坐标。适合用于while循环的模式。
 
     Args:
@@ -467,10 +476,18 @@ def move_to_posi_LoopMode(target_posi, stop_func, threshold:float=6):
     dist = euclidean_distance(curr_posi, target_posi)
     move_duration = get_move_duration(dist)
     if delta_degree >= 20:
+        itt.key_up('w')
         change_view_to_posi(target_posi, stop_func=stop_func, curr_posi=curr_posi)
     else:
         change_view_to_posi(target_posi, stop_func=stop_func, max_loop=4, offset=2, print_log=False, curr_posi=curr_posi)
-    move(MOVE_AHEAD, move_duration)
+    if fast_move:
+        if move_duration>0.5:
+            itt.key_down('w')
+        else:
+            itt.key_up('w')
+            move(MOVE_AHEAD, move_duration)
+    else:
+        move(MOVE_AHEAD, move_duration)
     return euclidean_distance(genshin_map.get_position(), target_posi) <= threshold
 # if os.path.exists(CVDC.CVDC_PREPROCESSED_CACHE):
 #     if time.time() - os.path.getmtime(CVDC.CVDC_PREPROCESSED_CACHE) > 86400:

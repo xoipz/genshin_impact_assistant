@@ -47,7 +47,7 @@ class TLPath2Mission(AdvancePage):
 
     def __init__(self) -> None:
         super().__init__(
-            document_link='https://genshinimpactassistant.github.io/GIA-Document/#/convert_tavern_route_to_mission')
+            document_link='https://genshinimpactassistant.github.io/GIA-Document/#/create_mission_in_GUI')
         self.file_last_modify_time = 0
         self.route_dict = None
         self.tavern_dict = None
