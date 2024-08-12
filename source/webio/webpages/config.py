@@ -31,7 +31,7 @@ class ConfigPage(AdvancePage):
         self.read_only = False
 
         self.input_verify={
-            "test":lambda x:x
+
         }
 
     def _load_config_files(self):
