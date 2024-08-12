@@ -1,3 +1,5 @@
+import os.path
+
 from source.webio.util import *
 from pywebio import *
 from source.webio.advance_page import AdvancePage
@@ -30,6 +32,14 @@ class MissionPage(AdvancePage):
     def _load_json_config(self):
         return load_json('mission_settings.json', f"{CONFIG_PATH}\\mission")
 
+    def update_local_edit_mission_meta(self):
+        if os.path.exists(fr"{ROOT_PATH}/config/mission/local_edit_mission_meta.json"):
+            meta = load_json('local_edit_mission_meta.json', fr"{ROOT_PATH}/config/mission")
+            for i in meta.keys():
+                if not os.path.exists(f"{ROOT_PATH}\\local_edit_missions\\{i}.py"):
+                    meta.pop(i)
+            save_json(meta, all_path=f"{ROOT_PATH}\\config\\mission\\local_edit_mission_meta.json")
+
     def _refresh(self):
         from source.mission.index_generator import generate_mission_index
         generate_mission_index()
@@ -41,6 +51,7 @@ class MissionPage(AdvancePage):
         if os.path.exists(fr"{ROOT_PATH}/config/missiondownload/missiondownload_meta.json"):
             self.MISSION_META.update(load_json('missiondownload_meta.json', fr"{ROOT_PATH}/config/missiondownload"))
         if os.path.exists(fr"{ROOT_PATH}/config/mission/local_edit_mission_meta.json"):
+            self.update_local_edit_mission_meta()
             self.MISSION_META.update(load_json('local_edit_mission_meta.json', fr"{ROOT_PATH}/config/mission"))
         self.missions = self.MISSION_INDEX
 
