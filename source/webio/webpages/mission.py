@@ -35,7 +35,7 @@ class MissionPage(AdvancePage):
     def update_local_edit_mission_meta(self):
         if os.path.exists(fr"{ROOT_PATH}/config/mission/local_edit_mission_meta.json"):
             meta = load_json('local_edit_mission_meta.json', fr"{ROOT_PATH}/config/mission")
-            for i in meta.keys():
+            for i in list(meta.keys()):
                 if not os.path.exists(f"{ROOT_PATH}\\local_edit_missions\\{i}.py"):
                     meta.pop(i)
             save_json(meta, all_path=f"{ROOT_PATH}\\config\\mission\\local_edit_mission_meta.json")
@@ -76,6 +76,16 @@ class MissionPage(AdvancePage):
         for i in self.missions:
             if i not in show_missions:
                 show_missions.append(i)
+
+        def pop_not_ascii():
+            for i in range(len(show_missions)):
+                if not show_missions[i].isascii():
+                    logger.error(f"{show_missions} contain non-ascii characters, which will be abandoned.")
+                    show_missions.pop(i)
+                    return pop_not_ascii()
+
+        pop_not_ascii()
+
         for i in range(len(show_missions)):
             if i%3==0:
                 grid_content.append([])
