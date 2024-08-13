@@ -411,7 +411,7 @@ class TeyvatMove_Automatic(FlowTemplate, TeyvatMoveCommon, Navigation):
             self._set_rfc(FC.END)
 
         # print(p1)
-        if movement.move_to_posi_LoopMode(self.posi_list[self.posi_index], self.upper.checkup_stop_func):
+        if movement.move_to_posi_LoopMode(self.posi_list[self.posi_index], self.upper.checkup_stop_func, fast_move=True):
             self.posi_index += 1
             self.posi_index = min(len(self.posi_list) - 1, self.posi_index)
             if self.upper.is_tianli_navigation:
