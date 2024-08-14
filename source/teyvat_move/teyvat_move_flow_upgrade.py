@@ -715,6 +715,7 @@ class TeyvatMove_FollowPath(FlowTemplate, TeyvatMoveCommon):
                 if not self.ready_to_end:
                     self.curr_break_point_index += 1
                     logger.debug(f"index {self.curr_break_point_index} posi {self.curr_breaks[self.curr_break_point_index]}")
+                    return self.state_check_bp()
                 else:
                     logger.info("path end")
                     itt.key_up('w')
