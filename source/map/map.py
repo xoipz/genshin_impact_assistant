@@ -299,7 +299,7 @@ class Map(MiniMap, BigMap, MapConverter):
         logger.debug(f"_move_bigmap: {dx} {dy}")
 
         itt.move_to(dx, dy, relative=True)
-        itt.delay(0.2, comment="waiting genshin")
+        itt.delay(0.05, comment="waiting genshin")
         itt.left_up()
         # if itt.get_img_existence(asset.confirm):
         # itt.key_press('esc')
@@ -322,7 +322,7 @@ class Map(MiniMap, BigMap, MapConverter):
             else:
                 return list([1024 / 2, 768 / 2])
         else:
-            itt.delay(0.2, comment="wait for a moment")
+            itt.delay(0.05, comment="wait for a moment")
             if euclidean_distance(self.get_bigmap_posi(is_upd=False).position, curr_posi) <= self.BIGMAP_TP_OFFSET:
                 return self._move_bigmap(target_posi=target_posi, float_posi=float_posi + 45)
             else:
@@ -404,8 +404,10 @@ class Map(MiniMap, BigMap, MapConverter):
 
         ui_control.ensure_page(UIPage.page_bigmap)
         self.check_bigmap_scaling()
-
-        self._switch_to_area(tp_region)
+        curr_posi = genshin_map.get_bigmap_posi().gimap
+        if euclidean_distance(curr_posi, tp_posi) > 1000:
+            logger.info(f"dist big, switch area")
+            self._switch_to_area(tp_region)
 
         click_posi = self._move_bigmap(tp_posi, csf=csf)
         if tp_type == "Domain":  # 部分domain有特殊名字
