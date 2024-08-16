@@ -263,6 +263,16 @@ def save_json(x, json_name='General.json', default_path=f'{ROOT_PATH}\\config\\s
         json.dump(x, open(all_path, 'w', encoding='utf-8'),
               ensure_ascii=False)
 
+def get_name(x):
+    (filename, line_number, function_name, text) = x
+    # = traceback.extract_stack()[-2]
+    return text[:text.find('=')].strip()
+
+def auto_name():
+    return get_name(traceback.extract_stack()[-2])
+
+AN = auto_name
+
 def verify_path(root):
     if not os.path.exists(root):
         verify_path(os.path.join(root, "../"))
@@ -778,7 +788,7 @@ def circle_mask(img,inner_r, outer_r):
     
     return masked_img
 
-def get_circle_points(x,y,  show_res = False):
+def get_circle_points(x,y,  show_res = False, radius=6):
     """围绕圆心绘制离散点.
 
     Args:
@@ -793,7 +803,7 @@ def get_circle_points(x,y,  show_res = False):
         import turtle
         turtle.speed(0)
     points = []
-    for r in range(5, 5*6, 5):
+    for r in range(5, 5*(radius+1), 5):
         n = int(2 * math.pi * r / (5))
         for i in range(n):
             angle = 2 * math.pi / n * i
@@ -924,7 +934,7 @@ def match_multiple_img(img, template, is_gray=False, is_show_res: bool = False, 
     return matched_coordinates
 
 def diff_angle(a1, a2):
-    return min(360-((a1-a2)&360), ((a1-a2)&360))
+    return min(360-(int(a1-a2)&360), (int(a1-a2)&360))
     
 
 def ansl_code2col(ansl_code ,reserve = True):

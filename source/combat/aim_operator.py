@@ -41,7 +41,7 @@ class AimOperator(BaseThreading):
         self.keep_distance_timer = AdvanceTimer(3,count=3).start()
         self.find_enemy_behind_barrier_timeout_timer = AdvanceTimer(10).start()  # 失败太多就别搞了，冷却一下
         self.aim_timeout_retry_timer = AdvanceTimer(6).start()
-        self.corr_rate = 1
+        self.corr_rate = 0.8
         self.sco_blocking_request = ThreadBlockingRequest()
 
     def pause_threading(self):
@@ -62,15 +62,20 @@ class AimOperator(BaseThreading):
             if self.stop_threading_flag:
                 return
 
+            self._thread_paused_flag = self.pause_threading_flag
+
             if self.pause_threading_flag:
                 if self.working_flag:
                     self.working_flag = False
                 time.sleep(1)
+
                 continue
 
             if not self.working_flag:
                 self.working_flag = True
-            
+
+
+
             if self.checkup_stop_func():
                 self.pause_threading_flag = True
                 continue
