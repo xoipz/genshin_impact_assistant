@@ -11,7 +11,7 @@ from source.path_lib import *
 
 # E_STRICT_MODE = True  # may cause more performance overhead
 
-E_STRICT_MODE = False  # may cause more performance overhead
+# E_STRICT_MODE = False  # may cause more performance overhead
 
 DETERMINING_WEIGHT = GIAconfig.General_DeterminingStrictWeight
 USING_ALPHA_CHANNEL = GIAconfig.General_UsingAlphaChannel
@@ -249,7 +249,7 @@ class TacticOperator(BaseThreading):
         logger.debug('do_use_e')
         self.itt.key_press('e')
         self.itt.delay(0.2)
-        if E_STRICT_MODE and(not self._is_e_release()):
+        if self.character.e_strict_mode and(not self._is_e_release()):
             self.do_use_e(times=times + 1)
         self.character.used_E()
 
@@ -287,7 +287,7 @@ class TacticOperator(BaseThreading):
             return 0
         # self.itt.key_press('w')
         self.itt.delay(0.2)
-        if E_STRICT_MODE and (not self._is_longE_release()):
+        if self.character.e_strict_mode and (not self._is_longE_release()):
             self.do_use_longe(times=times + 1)
         self.character.used_longE()
 
@@ -301,7 +301,7 @@ class TacticOperator(BaseThreading):
 
         self.chara_waiting()
         self.itt.key_press('q')
-        if E_STRICT_MODE and (self.is_q_ready()):
+        if self.character.e_strict_mode and (self.is_q_ready()):
             logger.debug('没q到')
             self.do_use_q(times=times + 1)
             self.itt.delay(0.2)
