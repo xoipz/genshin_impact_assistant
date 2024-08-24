@@ -74,6 +74,9 @@ class MissionPage(AdvancePage):
         grid_content = []
         mission_info = self._load_json_config()
         show_missions = [i['filename'] for i in sorted(mission_info, key=sort_by_priority)]
+        for i in self.missions:
+            if i not in show_missions:
+                show_missions.append(i)
         for i in show_missions.copy():
             if i not in self.missions:
                 show_missions.pop(show_missions.index(i))

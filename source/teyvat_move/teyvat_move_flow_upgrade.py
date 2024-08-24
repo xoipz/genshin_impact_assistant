@@ -682,9 +682,9 @@ class TeyvatMove_FollowPath(FlowTemplate, TeyvatMoveCommon):
         if len(self.curr_breaks) - 1 > self.curr_break_point_index:
             pass
         elif not self.ready_to_end:
-            if self.upper.is_precise_arrival:
-                logger.info("path ready to end")
-                self.ready_to_end = True
+            # if self.upper.is_precise_arrival:
+            logger.info("path ready to end")
+            self.ready_to_end = True
         else:
             pass
 
