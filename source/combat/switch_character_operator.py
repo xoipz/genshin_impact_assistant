@@ -71,12 +71,12 @@ class SwitchCharacterOperator(BaseThreading):
                 self.switch_character(switch_type="SHIELD")
                 time.sleep(1)
             else:
-                if self.aim_operator.sco_blocking_request.is_blocking():
-                    self.aim_operator.sco_blocking_request.reply_request()
-                    logger.debug("sco_blocking_request")
-                    self.switch_character(switch_type="AFK")
-                    time.sleep(0.2)
-                    continue
+                # if self.aim_operator.sco_blocking_request.is_blocking():
+                #     self.aim_operator.sco_blocking_request.reply_request()
+                #     logger.debug("sco_blocking_request")
+                #     self.switch_character(switch_type="AFK")
+                #     time.sleep(0.2)
+                #     continue
                 if self.tactic_operator.get_working_statement():  # tactic operator working
                     # time.sleep(0.1)
                     if self.position_check_timer.reached_and_reset():

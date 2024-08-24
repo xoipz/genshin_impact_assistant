@@ -12,8 +12,8 @@ def show_qt_window():
 if __name__ == '__main__':
     from source.webio.webio import server_thread
     threading.Thread(target=server_thread, daemon=False).start()
-    WEBUI_PROCESS = Process(target=show_qt_window)
-    WEBUI_PROCESS.start()
+    # WEBUI_PROCESS = Process(target=show_qt_window)
+    # WEBUI_PROCESS.start()
     import source.listening
     source.listening.listening()
 
