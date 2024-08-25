@@ -51,6 +51,7 @@ class TeyvatMoveFlowConnector(FlowConnector):
         self.PUO = PickupOperator()
         self.SCO = SwitchCharacterOperator()
         self.is_nahida = None
+        self.is_after_tp = False
 
 
         self.motion_state = IN_MOVE
@@ -102,6 +103,7 @@ class TeyvatTeleport(FlowTemplate):
 
     def state_in(self):
         genshin_map.bigmap_tp(self.upper.target_posi, tp_type=self.upper.tp_type, csf=self.upper.checkup_stop_func)
+        self.upper.is_after_tp = True
         self._next_rfc()
 
     def state_end(self):
@@ -374,7 +376,10 @@ class TeyvatMove_Automatic(FlowTemplate, TeyvatMoveCommon, Navigation):
     #     return closest_pp
 
     def state_before(self):
-        genshin_map.reinit_smallmap()
+        if self.upper.is_after_tp:
+            self.upper.is_after_tp = False
+        else:
+            genshin_map.reinit_smallmap()
         self.auto_move_timeout.reset()
         self.history_position_timer.reset()
         self.history_position = []
@@ -577,7 +582,11 @@ class TeyvatMove_FollowPath(FlowTemplate, TeyvatMoveCommon):
         self.last_posi = None
         # itt.key_down('w')
         if self.upper.is_reinit:
-            genshin_map.reinit_smallmap()
+            if self.upper.is_after_tp:
+                self.upper.is_after_tp = False
+            else:
+                genshin_map.reinit_smallmap()
+
         self.upper.while_sleep = 0
 
         # if self.upper.is_auto_pickup:
@@ -869,6 +878,13 @@ class TeyvatMove_FollowPath(FlowTemplate, TeyvatMoveCommon):
         #         while self.upper.PUO.pickup_recognize(): pass
         #         self.curr_posi = genshin_map.get_position()
 
+        if self.sprint_timer.reached():
+            if euclidean_distance(self.curr_posi, self.curr_target_pos)>=25:
+                if self.motion_state == IN_MOVE:
+                    logger.debug(f'sprint {euclidean_distance(self.curr_posi, self.curr_target_pos)}')
+                    itt.key_press('left_shift')
+                    self.sprint_timer.reset()
+
         self.use_shield_if_needed()
         self._set_inner_statement(STATEMENT_CHANGE_VIEW)
 
@@ -918,12 +934,7 @@ class TeyvatMove_FollowPath(FlowTemplate, TeyvatMoveCommon):
 
 
         # 冲
-        # if self.sprint_timer.reached():
-        #     if euclidean_distance(self.curr_posi, self.curr_target_pos)>=30:
-        #         if self.motion_state == IN_MOVE:
-        #             logger.debug(f'sprint {euclidean_distance(self.curr_posi, self.curr_target_pos)}')
-        #             itt.key_press('left_shift')
-        #             self.sprint_timer.reset()
+
 
         # w
         # self.auto_w(self.curr_posi)

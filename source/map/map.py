@@ -29,7 +29,7 @@ class Map(MiniMap, BigMap, MapConverter):
             super().__init__(device_type=MiniMap.DETECT_Mobile_720p)
 
         # Set bigmap tp arguments
-        self.MAP_POSI2MOVE_POSI_RATE = 0.3  # 移动距离与力度的比例
+        self.MAP_POSI2MOVE_POSI_RATE = 0.5  # 移动距离与力度的比例
         self.BIGMAP_TP_OFFSET = 20  # 距离目标小于该误差则停止
         self.BIGMAP_MOVE_MAX = 130  # 最大移动力度
         self.TP_RANGE = 200  # 在该像素范围内可tp
@@ -299,7 +299,7 @@ class Map(MiniMap, BigMap, MapConverter):
         logger.debug(f"_move_bigmap: {dx} {dy}")
 
         itt.move_to(dx, dy, relative=True)
-        itt.delay(0.05, comment="waiting genshin")
+        itt.delay(0.15, comment="waiting genshin")
         itt.left_up()
         # if itt.get_img_existence(asset.confirm):
         # itt.key_press('esc')
@@ -453,7 +453,8 @@ class Map(MiniMap, BigMap, MapConverter):
         while not (ui_control.get_page() == UIPage.page_main):
             time.sleep(0.2)
 
-        self.reinit_smallmap()
+        self.init_position(tp_posi)
+        # self.reinit_smallmap()
 
         return GIMAPPosition(tp_posi)
 
