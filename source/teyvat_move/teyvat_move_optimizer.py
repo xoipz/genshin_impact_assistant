@@ -79,7 +79,7 @@ class B_SplineCurve_GuidingHead_Optimizer():
     def predict_guiding_head_position(self,z):
         dxdu, dydu, dzdu = self.predict_gradient(z)
         rate = 0.5-(dzdu-120)*0.005
-        print(f"dzdu: {dzdu}, rate: {rate}")
+        # print(f"dzdu: {dzdu}, rate: {rate}")
         # if dzdu<=30:
         #     rate = 1
         # else:
@@ -89,7 +89,7 @@ class B_SplineCurve_GuidingHead_Optimizer():
         guiding_head_z = z + rate
         distances = abs(self.z_new - guiding_head_z)
         guiding_head_index = np.argmin(distances)
-        print(round(min(distances),2), guiding_head_index)
+        # print(round(min(distances),2), guiding_head_index)
         return [self.x_new[guiding_head_index], self.y_new[guiding_head_index]]
 
     def predict_gradient(self, z):
@@ -107,6 +107,6 @@ if __name__ == '__main__':
     tdo = B_SplineCurve_GuidingHead_Optimizer(tlpp)
     tdo.show_plt()
     x,y,z = tdo.predict_nearest_point(tlpp['start_position'][0],tlpp['start_position'][1],1)
-    print(x,y,z)
+    # print(x,y,z)
     r = tdo.predict_gradient(z)
-    print(r)
+    # print(r)
