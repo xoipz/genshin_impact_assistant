@@ -157,9 +157,9 @@ class CommissionParser():
     #     return commission_objects
 
     # TODO:不进行委托的基本地点
-    def detection(self, detected, tolerance=10):
+    def detection(self, detected, tolerance=40):
         targets = [[376, -6342], [2096, -4825], [4053, -4376], [2986, -6160], [895, -5322], [3726, -3750],
-                   [3745, -6853]]  # 示例目标点
+                   [3745, -6853],[4137, -3784]]  # 示例目标点
 
         # 检查detected值是否在任何一个目标值的误差范围内
         for target in targets:
