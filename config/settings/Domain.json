@@ -1,8 +1,8 @@
 {
-  "ChallengeTimes": 1,
-  "DomainName": "山脊守望",
-  "DomainStageName": "不移II",
-  "FastMove": true,
-  "IsObscuredDomain": false,
-  "Resin": "20"
+    "ChallengeTimes": 8,
+    "DomainName": "",
+    "DomainStageName": "",
+    "FastMove": true,
+    "IsObscuredDomain": false,
+    "Resin": 40
 }
