@@ -134,39 +134,14 @@ tools/
 source.7z
 source.7z.tmp
 tests/
-imgs/-21387.jpg
-assests/imgs/common/test.jpg
-dev_tools/origin_text.txt
-source/test11.jpg
-test11 copy.jpg
-source/cvAutoTrack_5/CVAUTOTRACK.dll
-source/cvAutoTrack_5/cvAutoTrack.h
-source/cvAutoTrack_5/CVAUTOTRACK.lib
-source/cvAutoTrack_5/cvAutoTrack.md5
-source/cvAutoTrack_5/cvAutoTrackCSharp.cs
-source/cvAutoTrack_5/version.tag
-source/cvAutoTrack_5.7z
-source/CVAUTOTRACK732.dll
-source/cvAutoTrack_7.7z
-source/cvAutoTrack_7.2.3/CVAUTOTRACK.dll
+
 config/tastic/*.json
 config/settings/*.json
 config/auto_collector/*.json
-toolkit/
-InstallerREADME.md
-giainstaller.py
-GIA Launcher.exe
-GIA Launcher.bat
-installer_config_cn.json
-installer_config.json
-.idea/.gitignore
 /config/settings/auto_domain.json
 config/settings/auto_collector.json
-source/cvAutoTrack_7.3.3/CVAUTOTRACK.dll
 config/timer/*.txt
-source/test234.py
-source/test235.py
-source/test236.py
+
 
 
 # config
@@ -175,19 +150,10 @@ config/tactic/*.json
 !config/tactic/team_example_3.json
 config/tastic_backup/*
 .vs/*
-translation/locale/en_US/LC_MESSAGES/en_US.pot
-translation/locale/zh_CN/LC_MESSAGES/zh_CN.pot
-changelog_option.js
-CHANGELOG.md
+
+
 node_modules/*
-assets/inference/*
-.vscode/*.sql
-source/git_downloader.py
-cvAutoTrack_Cache.xml
-source/test239.py
-source/test240.py
-out/*
-assets/dm/*
+
 config/settings/damo.json
 config/settings/dm.json
 config/collection_path/*
@@ -200,29 +166,15 @@ config/mission/*.json
 Logs/*
 
 # test file
-source/test/test242.py
-source/test/test251.py
-source/test/test600.py
-test1.py
-testt.py
+
 config/commission/commission_dict.json
 
 # gettext-markdown
 
-translation/locale/en_US/LC_MESSAGES/en_US.mo
-translation/locale/zh_CN/LC_MESSAGES/zh_CN.mo
 .history/*
-missions/mission_index.py
-missions/mission_meta.py
-missions/*.py
-missions/disable/*.py
-missions/backup/*.py
 
-dev_assets/tlpp/*
-!dev_assets/tlpp/QXV220230513083258i0.pydict
-requirements2.txt
 config/missiondownload/missiondownload_meta.json
 config/cookies/web_genshin_cookies.json
-local_edit_missions/
+
 
 *.giamode
