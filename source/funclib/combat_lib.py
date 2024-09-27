@@ -237,11 +237,11 @@ def get_enemy_blood_bar_img(img):
     im_src[:, :, 2][im_src[:, :, 1] != bg_num] = 0
     # _, imsrc2 = cv2.threshold(imsrc[:, :, 2], 1, 255, cv2.THRESH_BINARY)
     blood_bar_img = im_src[:, :, 2]
-    if False:
-        # cv2.imshow("mask",mask)
-        cv2.imshow("21312231", im_src)
-        cv2.imshow("2131231", blood_bar_img)
-        cv2.waitKey(10)
+    # if False:
+    #     # cv2.imshow("mask",mask)
+    #     cv2.imshow("im_src", im_src)
+    #     cv2.imshow("blood_bar_img", blood_bar_img)
+    #     cv2.waitKey(10)
     return blood_bar_img
     
 def combat_statement_detection():
