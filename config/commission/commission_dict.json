@@ -1,18 +1,1 @@
-[
-  {
-    "done": true,
-    "position": [
-      1334.1045220000003,
-      -6014.667452
-    ],
-    "type": "Emergency"
-  },
-  {
-    "done": false,
-    "position": [
-      3302.2018519999992,
-      -6098.9973119999995
-    ],
-    "type": "IncreasingDanger"
-  }
-]
+[]
