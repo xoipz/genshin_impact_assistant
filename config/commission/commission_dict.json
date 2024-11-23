@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "done": false,
+    "position": [
+      1810.7293220000015,
+      -5674.995571999999
+    ],
+    "type": "IncreasingDanger"
+  },
+  {
+    "done": false,
+    "position": [
+      1610.1071020000015,
+      -4482.078362
+    ],
+    "type": "BigIceColdCrisis"
+  },
+  {
+    "done": false,
+    "position": [
+      2880.2457120000004,
+      -3874.228321999999
+    ],
+    "type": "Emergency"
+  }
+]
