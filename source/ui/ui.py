@@ -67,11 +67,13 @@ class UI():
             destination (Page):
             confirm_wait:
         """
+
         retry_timer = AdvanceTimer(1)
         self.switch_ui_lock.acquire()
         # Reset connection
         for page in self.ui_pages:
             page.parent = None
+
 
         # Create connection
         visited = [destination]
@@ -89,6 +91,7 @@ class UI():
                 break
             visited = new
 
+        print(3)
         logger.info(f"UI goto {destination}")
         confirm_timer = AdvanceTimer(confirm_wait, count=1)
         timeout_timer = AdvanceTimer(5)
@@ -158,4 +161,6 @@ ui_control = UI()
 
 if __name__ == '__main__':
     ui = UI()
-    ui.ui_goto(page_main)
+    # ui.ui_goto(page_main)
+
+    print(ui.ui_pages[0].is_current_page(itt))

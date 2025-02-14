@@ -19,7 +19,6 @@ class CommissionExecutor(TaskTemplate, CommissionParser):
     def __init__(self):
         super().__init__()
         self.setName("CommissionExecutor")
-            
         self._set_and_save_and_load_commission_dicts() # 扫描,加载委托
         self.exec_times = 0
         self.EXEC_LIMIT = 3
