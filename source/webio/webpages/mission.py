@@ -1,3 +1,5 @@
+import os.path
+
 from source.webio.util import *
 from pywebio import *
 from source.webio.advance_page import AdvancePage
@@ -10,21 +12,35 @@ logger.debug(f"generate mission index succ")
 import missions.mission_index
 
 
-
-
+def sort_by_priority(x):
+    r = x['priority']
+    if x['enabled']:
+        r-=1000
+    return r
 
 class MissionPage(AdvancePage):
-    MISSION_INDEX = missions.mission_index.MISSION_INDEX
-    MISSION_META = load_json('mission_internal_meta.json', fr"{ROOT_PATH}/source/mission")
-    NAME_PROCESSBAR_MissionRebuild = 'PROCESSBAR_MissionRebuild'
+
     def __init__(self) -> None:
+        self.MISSION_INDEX = missions.mission_index.MISSION_INDEX
+        self.MISSION_META = load_json('mission_internal_meta.json', fr"{ROOT_PATH}/source/mission")
+        self.NAME_PROCESSBAR_MissionRebuild = 'PROCESSBAR_MissionRebuild'
         super().__init__(document_link=f'https://genshinimpactassistant.github.io/GIA-Document/#/{GLOBAL_LANG}/mission')
         self.missions = self.MISSION_INDEX
         self._create_default_settings()
         self.process_i = 1
         self.process_flag = False
         
-    
+    def _load_json_config(self):
+        return load_json('mission_settings.json', f"{CONFIG_PATH}\\mission")
+
+    def update_local_edit_mission_meta(self):
+        if os.path.exists(fr"{ROOT_PATH}/config/mission/local_edit_mission_meta.json"):
+            meta = load_json('local_edit_mission_meta.json', fr"{ROOT_PATH}/config/mission")
+            for i in list(meta.keys()):
+                if not os.path.exists(f"{ROOT_PATH}\\local_edit_missions\\{i}.py"):
+                    meta.pop(i)
+            save_json(meta, all_path=f"{ROOT_PATH}\\config\\mission\\local_edit_mission_meta.json")
+
     def _refresh(self):
         from source.mission.index_generator import generate_mission_index
         generate_mission_index()
@@ -36,8 +52,12 @@ class MissionPage(AdvancePage):
         if os.path.exists(fr"{ROOT_PATH}/config/missiondownload/missiondownload_meta.json"):
             self.MISSION_META.update(load_json('missiondownload_meta.json', fr"{ROOT_PATH}/config/missiondownload"))
         if os.path.exists(fr"{ROOT_PATH}/config/mission/local_edit_mission_meta.json"):
+            self.update_local_edit_mission_meta()
             self.MISSION_META.update(load_json('local_edit_mission_meta.json', fr"{ROOT_PATH}/config/mission"))
         self.missions = self.MISSION_INDEX
+
+
+
     
     def _create_default_settings(self):
         j = load_json('mission_settings.json', f"{CONFIG_PATH}\\mission", auto_create=True)
@@ -52,43 +72,60 @@ class MissionPage(AdvancePage):
         # put missions grid
         output.clear_scope('SCOPE_GRID')
         grid_content = []
-        for i in range(len(self.missions)):
+        mission_info = self._load_json_config()
+        show_missions = [i['filename'] for i in sorted(mission_info, key=sort_by_priority)]
+        for i in self.missions:
+            if i not in show_missions:
+                show_missions.append(i)
+        for i in show_missions.copy():
+            if i not in self.missions:
+                show_missions.pop(show_missions.index(i))
+
+        def pop_not_ascii():
+            for i in range(len(show_missions)):
+                if not show_missions[i].isascii():
+                    logger.error(f"{show_missions} contain non-ascii characters, which will be abandoned.")
+                    show_missions.pop(i)
+                    return pop_not_ascii()
+
+        pop_not_ascii()
+
+        for i in range(len(show_missions)):
             if i%3==0:
                 grid_content.append([])
-            grid_content[i//3].append(output.put_scope(f"{self.missions[i]}").style('border: 1px solid #ccc; border-radius: 16px'))
+            grid_content[i//3].append(output.put_scope(f"{show_missions[i]}").style('border: 1px solid #ccc; border-radius: 16px; margin:5px 15px'))
         output.put_grid(content=grid_content, scope='SCOPE_GRID')
         
         j = load_json('mission_settings.json', f"{CONFIG_PATH}\\mission")
-        for mission_name in self.missions:
+        for mission_name in show_missions:
             output.clear(mission_name)
             mauthor = None
             mnote = None
             mtime = None
             if mission_name in self.MISSION_META:
-                if 'title' in self.MISSION_META[mission_name].keys():
-                    if GLOBAL_LANG in self.MISSION_META[mission_name]['title']:
-                        mission_show_name = self.MISSION_META[mission_name]['title'][GLOBAL_LANG]
-                    else:
-                        mission_show_name = self.MISSION_META[mission_name]['title']
-                if 'author' in self.MISSION_META[mission_name].keys():
-                    if 'author' in self.MISSION_META[mission_name]:
-                        mauthor = self.MISSION_META[mission_name]['author']
-                if 'note' in self.MISSION_META[mission_name].keys():
-                    if 'note' in self.MISSION_META[mission_name]:
-                        mnote = self.MISSION_META[mission_name]['note']
+                if ('title' in self.MISSION_META[mission_name].keys()) and (self.MISSION_META[mission_name]['title'] is not None) and (GLOBAL_LANG in self.MISSION_META[mission_name]['title']):
+                    mission_show_name = self.MISSION_META[mission_name]['title'][GLOBAL_LANG]
+                else:
+                    logger.debug(f"mission {mission_name} has not title. generate default title instead.")
+                    _tag = self.MISSION_META[mission_name].get('tags', "mission")
+                    _filename = mission_name
+                    mission_show_name = f"{_tag}: {_filename}"
+                mauthor = self.MISSION_META[mission_name].get('author', None)
+                mnote = self.MISSION_META[mission_name].get('note', None)
                 if 'last_update' in self.MISSION_META[mission_name].keys():
-                    if 'last_update' in self.MISSION_META[mission_name]:
-                        mtime = f"UTC {self.MISSION_META[mission_name]['last_update']}"
+                    mtime = f"UTC {self.MISSION_META[mission_name]['last_update']}"
                 curr_mission_meta = self.MISSION_META[mission_name]
             else:
+                # 该mission没有元数据，可能由于它是本地任务，只有下载的任务能识别元数据。
                 mission_show_name = mission_name
                 curr_mission_meta = {}
             
             
             if 'local_edit_mission' in curr_mission_meta:
                 # if os.path.exists(curr_mission_meta['local_edit_mission']):
-                output.put_markdown(t2t('## Local Mission')+': '+mission_show_name, scope=mission_name)
-            output.put_text(mission_show_name, scope=mission_name)
+                output.put_markdown(t2t('## Local Mission')+': '+ mission_show_name, scope=mission_name)
+            else:
+                output.put_markdown(t2t('## ') + mission_show_name, scope=mission_name)
             pv = 999
             ebd = False
             for iii in j:
@@ -98,17 +135,17 @@ class MissionPage(AdvancePage):
                     if 'enabled' in iii:
                         ebd = iii['enabled']
             if ebd:ebd=['enabled']
-            pin.put_checkbox(name=f"CHECKBOX_{mission_name}",options=[{'label':t2t('Enable'),'value':'enabled'}],scope=mission_name,value=ebd)
+            pin.put_checkbox(name=f"CHECKBOX_{mission_name}",options=[{'label':t2t('Enable'),'value':'enabled'}],scope=mission_name,value=ebd).style(f"zoom: 120%; color: {'green' if ebd else 'red'}")
             pin.put_input(name=f"PRIORITY_{mission_name}",label=t2t("Priority"),scope=mission_name,type=input.NUMBER,value=pv)
-            if mauthor!=None:
+            if mauthor is not None:
                 output.put_text(t2t('Author: ')+mauthor, scope=mission_name)
             if 'description' in curr_mission_meta:
                 output.put_text(t2t('Description: ')+curr_mission_meta['description'], scope=mission_name)
             if 'tags' in curr_mission_meta:
                 output.put_text(t2t('Tags: ')+" ".join(str(t) for t in curr_mission_meta['tags']), scope=mission_name)
-            if mtime!=None:
+            if mtime is not None:
                 output.put_text(t2t('Time: ')+mtime, scope=mission_name)
-            if mnote!=None:
+            if mnote is not None:
                 output.put_text(t2t('Note: ')+mnote, scope=mission_name)
             
             
@@ -167,6 +204,7 @@ class MissionPage(AdvancePage):
         save_json(mission_info, json_name='mission_settings.json', default_path=fr'{CONFIG_PATH}/mission')
         save_json([i['filename'] for i in mission_info if i['enabled']], json_name='mission_group.json', default_path=fr'{CONFIG_PATH}/mission')
         toast_succ()
+        self._render_scopes()
     
     def _load(self):
         # put buttons

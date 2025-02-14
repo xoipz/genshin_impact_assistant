@@ -1,3 +1,5 @@
+import time
+
 from source.util import *
 import source.flow.utils.flow_code as FC
 from source.flow.utils import flow_state as FlowState, flow_state as ST
@@ -84,6 +86,24 @@ class FlowTemplate():
         self.rfc = rfc
         logger.debug(f"{self.flow_name} set rfc to {self.rfc}")
 
+    def set_rfc_force(self, rfc):
+        origin_rfc = self.rfc
+        self.rfc = rfc
+        while 1:
+            time.sleep(2)
+            if self.upper.checkup_stop_func(): return
+            if self.rfc == origin_rfc and self.rfc != rfc:
+                logger.info(f'reset rfc: {self.rfc} -> {rfc}')
+                self.rfc = rfc
+            else:
+                break
+
+    def reset(self):
+        self.rfc = FC.INIT
+
+
+
+
 class EndFlowTemplate(FlowTemplate):
     def __init__(self, upper:FlowConnector, flow_id:str, err_code_id = ERR_PASS):
         self.upper = upper
@@ -112,6 +132,7 @@ class FlowController(base_threading.AdvanceThreading):
             self.flow_name=""
         self.last_err_code = ERR_NONE
         self.flow_dict = {}
+        self.flow_dict: t.Dict[str, FlowTemplate]
         self.current_flow_id = current_flow_id
         # self.end_flow_id = None
         self.flow_connector = flow_connector
@@ -163,13 +184,17 @@ class FlowController(base_threading.AdvanceThreading):
         while 1:
             time.sleep(self.get_while_sleep())
             if self.stop_threading_flag:
+                logger.debug(f"{self.name} stop.")
                 return
 
             if self.pause_threading_flag:
                 if self.working_flag:
                     self.working_flag = False
+                self._thread_paused_flag = True
                 time.sleep(1)
                 continue
+            else:
+                self._thread_paused_flag = False
 
             if not self.working_flag:
                 self.working_flag = True
@@ -181,6 +206,8 @@ class FlowController(base_threading.AdvanceThreading):
                     continue
             '''write your code below'''
 
+            if self.current_flow_id == ST.NULL:
+                continue
             rcode = self.flow_dict[self.current_flow_id].enter_flow()
             if "$END$" in rcode:
                 self.last_err_code = self.flow_dict[rcode].enter_flow()

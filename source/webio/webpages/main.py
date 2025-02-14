@@ -14,6 +14,7 @@ from source.config.cvars import *
 from source.generic_event import generic_event
 import psutil
 from source.cvars import PROCESS_NAME
+from source.ingame_ui.ingame_ui import set_notice
 
 
 def get_yuanshen_exe_path():
@@ -56,16 +57,18 @@ class MainPage(AdvancePage):
             try:
                 pin.pin['isSessionExist']
             except SessionNotFoundException:
-                logger.info(t2t("未找到会话，可能由于窗口关闭。请刷新页面重试。"))
-                return
+                logger.info(t2t("未找到会话，程序退出。"))
+                os._exit(0)
+                sys.exit()
             except SessionClosedException:
                 logger.info(t2t("未找到会话，可能由于窗口关闭。请刷新页面重试。"))
-                return
+                os._exit(0)
+                sys.exit()
             except AssertionError:
                 pass
             if pin.pin['FlowMode'] != listening.SEMIAUTO_FUNC_MANAGER.last_d:  # 比较变更是否被应用
                 listening.SEMIAUTO_FUNC_MANAGER.last_d = pin.pin['FlowMode']  # 应用变更
-                listening.SEMIAUTO_FUNC_MANAGER.apply_change(pin.pin['FlowMode'])
+
                 # self.log_list_lock.acquire()
                 # output.put_text(t2t("正在导入模块, 可能需要一些时间。"), scope='LogArea').style(
                 #     f'color: black; font_size: 20px')
@@ -82,14 +85,22 @@ class MainPage(AdvancePage):
 
             # Output log
 
-            self.log_list_lock.acquire()
-            for text, color in self.log_list:
-                if text == "$$end$$":
-                    output.put_text("", scope='LogArea')
-                else:
-                    output.put_text(text, scope='LogArea', inline=True).style(
-                        f'color: {color}; font_size: 20px')  # ; background: aqua
+            def printer(x):
+                for text, color in x:
+                    if text == "$$end$$":
+                        output.put_text("", scope='LogArea')
+                    else:
+                        output.put_text(text, scope='LogArea', inline=True).style(
+                            f'color: {color}; font_size: 20px')  # ; background: aqua
 
+            self.log_list_lock.acquire()
+            if len(self.log_history) > 600:
+                output.clear('LogArea')
+                printer(self.log_history[-100:])
+                self.log_history = []
+                logger.debug(f"webio clean logs.")
+            printer(self.log_list)
+            self.log_history += self.log_list
             self.log_list.clear()
             self.log_list_lock.release()
 
@@ -118,11 +129,12 @@ class MainPage(AdvancePage):
             output.set_processbar(name=self.PROCESSBAR_PERFORMANCE, value=generic_event.dilation_rate,
                                    label=f'{generic_event.dilation_rate_note}     {t2t("running speed")}: {round(generic_event.dilation_rate, 2) * 100}%')
             # output.clear(self.SCOPE_PERFORMANCE)
-            if generic_event.dilation_rate <= 0.6:
-                output.toast(
-                    t2t("Warning: Extremely low performance, if you see this message for a long time, please check if your computer meets the lowest requirements."),
-                    color='red')
+            if generic_event.dilation_rate <= 0.65:
+                tip = t2t("Warning: Extremely low performance, if you see this message for a long time, please check if your computer meets the lowest requirements.")
+                output.toast(tip,color='red')
+                set_notice(tip, timeout=1)
                 time.sleep(0.5)
+
 
             time.sleep(0.1)
 
@@ -146,12 +158,12 @@ class MainPage(AdvancePage):
                     "value": "LaunchGenshinTask"
                 },
                 {
-                    "label": t2t("Domain Task"),
-                    "value": "DomainTask"
-                },
-                {
                     "label": t2t("Daily Commission"),
                     "value": "CommissionTask"
+                },
+                {
+                    "label": t2t("Domain Task"),
+                    "value": "DomainTask"
                 },
                 {
                     "label": t2t("Claim Reward"),
@@ -165,6 +177,11 @@ class MainPage(AdvancePage):
                     "label": t2t("Mission"),
                     "value": "MissionTask"
                 }
+                # ,
+                # {
+                #     "label": t2t("Collect Images(Dev)"),
+                #     "value": "CollectImage"
+                # }
             ]
             output.put_row([  # 横列
                 output.put_column([  # 左竖列
@@ -188,7 +205,9 @@ class MainPage(AdvancePage):
 
                         pin.put_select(('FlowMode'), [
                             {'label': t2t('Idle'), 'value': "idle"},
-                            {'label': t2t('Auto Combat'), 'value': "semiauto_combat"}
+                            {'label': t2t('Auto Combat'), 'value': "semiauto_combat"},
+                            {'label': t2t('Collect Images(Dev)'), 'value': "collect_image"},
+                            {'label': t2t('Record Path'), 'value': "record_path"}
                         ])
                     ],
                     ),
@@ -205,6 +224,11 @@ class MainPage(AdvancePage):
                                 'value': 'story_skip_assist'
                             }]
                                          )
+                    ]),
+                    output.put_markdown(t2t('## Other Selections')),
+                    output.put_row([
+                        output.put_button(t2t('Calibration Angle Rotation Parameter'), onclick=self._onclick_calibration_cvdc),
+
                     ]),
                 ], size='auto'), None,
                 output.put_scope('Log')
@@ -237,18 +261,24 @@ class MainPage(AdvancePage):
     #         raise FileNotFoundError
     #     return load_json(str(jsonname),default_path=f"{CONFIG_PATH}\\mission_groups")
 
+    def _onclick_calibration_cvdc(self):
+        set_notice(t2t("Calibrating Rotation. Please waiting."))
+        from source.funclib.movement import CVDC
+        CVDC.calibration_cvdc()
+        set_notice(t2t("Calibrating Rotation Completed."), timeout=3)
+
     def on_click_startstop(self):
         # listening.MISSION_MANAGER.set_mission_list(list(pin.pin["MissionSelect"]))
         if 'is_auto_start_genshin' in pin.pin[self.CHECKBOX_IS_AUTOSTART_GENSHIN]:
             if not is_yuanshen_started():
                 if os.path.exists(GIAconfig.General_GenshinEXEPath):
-                    os.popen(f'"{GIAconfig.General_GenshinEXEPath}"')
+                    os.system(f'"explorer {GIAconfig.General_GenshinEXEPath}"')
                     output.toast(t2t('Genshin, Start!'), color='success')
                 else:
                     output.toast(
                         t2t('The path to the Genshin execution file was not found. You should run it once manually to recognize the Genshin executable path.'))
             else:
-                if GIAconfig.General_GenshinEXEPath == "":
+                if GIAconfig.General_GenshinEXEPath == "" or (not os.path.exists(GIAconfig.General_GenshinEXEPath)):
                     path = get_yuanshen_exe_path()
                     if path != "":
                         if path != GIAconfig.General_GenshinEXEPath:

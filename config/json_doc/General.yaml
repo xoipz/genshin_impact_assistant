@@ -36,5 +36,14 @@ Python32Path:
 UsingAlphaChannel:
   conceal: true
 
+RecordPath_CollectionType:
+  select_items:
+  - Plant
+  - Artifact
+  - Combat
+  - Mineral
+
+RecordPath_CollectionName:
+  special_index: $INPUT_VERIFY$#collection_names
 
 

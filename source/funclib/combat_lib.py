@@ -1,3 +1,5 @@
+import random
+
 from source.manager import img_manager, posi_manager, asset
 from source.util import *
 from source.common.base_threading import BaseThreading
@@ -237,11 +239,36 @@ def get_enemy_blood_bar_img(img):
     im_src[:, :, 2][im_src[:, :, 1] != bg_num] = 0
     # _, imsrc2 = cv2.threshold(imsrc[:, :, 2], 1, 255, cv2.THRESH_BINARY)
     blood_bar_img = im_src[:, :, 2]
-    # if False:
-    #     # cv2.imshow("mask",mask)
-    #     cv2.imshow("im_src", im_src)
-    #     cv2.imshow("blood_bar_img", blood_bar_img)
-    #     cv2.waitKey(10)
+    if CV_DEBUG_MODE:
+        # cv2.imshow("mask",mask)
+        cv2.imshow("21312231", im_src)
+        cv2.imshow("2131231", blood_bar_img)
+        cv2.waitKey(10)
+    return blood_bar_img
+
+def get_mineral_blood_bar_img(img):
+    """
+    挖矿也是战斗！
+    :param img:
+    :return:
+    """
+    red_num = 255
+    green_num = 217
+    blue_num = 98
+    # bg_num = 90
+    im_src = img
+    im_src = itt.png2jpg(im_src, channel='ui', alpha_num=254)
+    im_src[990:1080, :, :] = 0
+    im_src[:, :, 2][im_src[:, :, 2] != red_num] = 0
+    im_src[:, :, 2][im_src[:, :, 0] != blue_num] = 0
+    im_src[:, :, 2][im_src[:, :, 1] != green_num] = 0
+    # _, imsrc2 = cv2.threshold(imsrc[:, :, 2], 1, 255, cv2.THRESH_BINARY)
+    blood_bar_img = im_src[:, :, 2]
+    if CV_DEBUG_MODE:
+        # cv2.imshow("mask",mask)
+        cv2.imshow("21312231", cv2.cvtColor(im_src, cv2.COLOR_BGR2RGB))
+        cv2.imshow("2131231", blood_bar_img)
+        cv2.waitKey(10)
     return blood_bar_img
     
 def combat_statement_detection():
@@ -351,8 +378,11 @@ def get_characters_name(max_retry = 50):
                     break
             if not succ:
                 if retry_times<max_retry-1:
-                    logger.warning(f"get characters name fail, retry {retry_times}")
-                    itt.move_to(200,0,relative=True)
+                    if retry_times < 20:
+                        logger.info(f"get characters name fail, retry {retry_times}")
+                    else:
+                        logger.warning(f"get characters name fail, retry {retry_times}")
+                    itt.move_to(200,random.randint(-50,50),relative=True)
                     break
                 else:
                     ret_list.append(None)
@@ -565,14 +595,19 @@ def get_chara_list():
         cQcd_time = get_param(team_item, "Qcd_time", autofill_flag, chara_name=cname)
         c_vision = get_param(team_item, "vision", autofill_flag, chara_name=cname)
         c_long_attack_time = get_param(team_item, "long_attack_time", autofill_flag, chara_name=cname, value_when_empty=2.5)
-    
+        c_e_strict_mode = get_param(team_item, "e_strict_mode", autofill_flag, chara_name=cname, value_when_empty=False)
+        if c_e_strict_mode:
+            if c_position == "Shield":
+                c_e_strict_mode = True
+                logger.info(f"character {cname} e_strict_mode has been set to True.")
+
         chara_list.append(
             character.Character(
                 name=cname, position=c_position, n=cn, priority=c_priority,
                 E_short_cd_time=cE_short_cd_time, E_long_cd_time=cE_long_cd_time, Elast_time=cElast_time,
                 tactic_group=c_tactic_group, trigger=c_trigger,
                 Epress_time=cEpress_time, Qlast_time=cQlast_time, Qcd_time=cQcd_time, vision = c_vision,
-                long_attack_time = c_long_attack_time
+                long_attack_time = c_long_attack_time, e_strict_mode=c_e_strict_mode
             )
         )
     if load_err_times>0:
@@ -591,7 +626,16 @@ class CombatStatementDetectionLoop(BaseThreading):
         self.is_low_health = False
         self.is_freeze_state = False
         self._is_init = False
-    
+
+    def active_find_enemy(self):
+        self.while_sleep = 0
+        from source.funclib import movement
+        for i in range(16):
+            movement.cview(24, use_CVDC=True)
+            itt.delay(0.3, comment="CSDL: active_find_enemy")
+            if self.get_combat_state(): break
+        self.while_sleep = 0.5
+
     def freeze_state(self):
         logger.info(f"CSDL freeze state")
         self.is_freeze_state = True
@@ -632,7 +676,7 @@ class CombatStatementDetectionLoop(BaseThreading):
             self.state_counter += 1
         else:
             self.state_counter = 0
-            self.while_sleep = 0.5
+            self.while_sleep = 0.4
         if self.state_counter >= 10:
             logger.debug(f'combat_statement_detection change state: {self.current_state} -> {state} {r}')
             # if self.current_state == False:
@@ -646,14 +690,17 @@ class CombatStatementDetectionLoop(BaseThreading):
 CSDL = CombatStatementDetectionLoop()
 CSDL.start()
 
+
+
 if __name__ == '__main__':
     # get_curr_team_file()
     a = get_chara_list()
     print()
     # set_party_setup("Lisa")
     while 1:
-        time.sleep(1)
-        print(get_characters_name())
+        time.sleep(0.1)
+        get_mineral_blood_bar_img(itt.capture(jpgmode=FOUR_CHANNELS))
+        # print(get_characters_name())
         # print(is_character_busy())
         # print(unconventionality_situation_detection())
         # print(combat_statement_detection())

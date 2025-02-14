@@ -7,7 +7,7 @@ from source.interaction.minimap_tracker import tracker
 from source.funclib import combat_lib, generic_lib, movement
 from source.interaction.interaction_core import itt
 from source.funclib.err_code_lib import ERR_PASS, ERR_STUCK
-from source.common.timer_module import AdvanceTimer
+from source.common.timer_module import AdvanceTimer, Timer
 from source.combat.combat_controller import CombatController
 from source.map.map import genshin_map
 from source.exceptions.mission import *
@@ -49,6 +49,8 @@ class MissionExecutor(BaseThreading):
         self.raise_exception_flag = False
         self.handle_exception_mode = EXCEPTION_RECOVER
         self.puo_crazy_f_mode = False
+
+
         self.itt = itt
 
     def _init_sub_threading(self, feat_name=""):
@@ -140,7 +142,15 @@ class MissionExecutor(BaseThreading):
             while combat_lib.CSDL.get_combat_state():
                 time.sleep(0.5)
             self.stop_combat()
-    
+
+    def _exec_absorption(self, mode='ALL'):
+        """
+        执行absorption的具体代码。
+        由于不同自定义任务的吸附有所不同，因此单独实现更加方便。
+        :return:
+        """
+        self.PUO.absorb(mode=mode)
+
     def move(self, MODE:str = None,
              stop_rule = None,
              target_posi:list = None,
@@ -157,26 +167,42 @@ class MissionExecutor(BaseThreading):
         puo_start_flag = False
         if self.PUO_initialized:
             if not self.PUO.pause_threading_flag:
-                logger.debug(f"in tmf, pause puo.")
+        #         logger.debug(f"in tmf, pause puo.")
                 puo_start_flag = True
-                self.PUO.pause_threading()
+        #         self.PUO.pause_threading()
         
         self.TMCF.reset()
         self.TMCF.set_parameter(MODE=MODE,stop_rule=stop_rule,target_posi=target_posi,path_dict=path_dict,to_next_posi_offset=to_next_posi_offset,special_keys_posi_offset=special_keys_posi_offset,reaction_to_enemy=reaction_to_enemy,is_tp=is_tp,is_reinit=is_reinit,is_precise_arrival=is_precise_arrival,stop_offset=stop_offset,is_auto_pickup=puo_start_flag)
         self.TMCF.start_flow()
         while 1:
-            time.sleep(0.6)
+            time.sleep(0.3)
+            if self.checkup_stop_func(): return
             if self.TMCF.pause_threading_flag:
                 break
             if self._is_exception():
                 self.TMCF.pause_threading()
                 break
+
+            # PICKUP
+
+            if self.PUO_initialized:
+                if self.PUO.is_absorb():
+                    if not self.TMCF.pause_threading_flag:
+                        self.TMCF.pause_threading()
+                        while 1:
+                            siw()
+                            if self.TMCF.is_thread_paused(): break
+                        itt.key_up('w')
+
+                    self._exec_absorption()
+                    self.TMCF.continue_threading()
+
         if self.TMCF.get_and_reset_err_code() != ERR_PASS:
             self.exception_flag = True
         
-        if self.PUO_initialized:
-            if puo_start_flag:
-                self.PUO.continue_threading()
+        # if self.PUO_initialized:
+        #     if puo_start_flag:
+        #         self.PUO.continue_threading()
         self._handle_exception()
         return self.TMCF.get_and_reset_err_code()
         
@@ -194,13 +220,18 @@ class MissionExecutor(BaseThreading):
         r = self.move(MODE="AUTO", target_posi=p, is_tp = is_tp, is_precise_arrival=is_precise_arrival, stop_rule=stop_rule)
         return r
         
-    def move_along(self, path, is_tp = None, is_precise_arrival=None, stop_rule = None):
+    def move_along(self, path, is_tp = None, is_precise_arrival=None, stop_rule = None, adsorb = True):
         if isinstance(path,str):
             path_dict = self.get_path_file(path)
         elif isinstance(path,dict):
             path_dict = path
+        else:
+            logger.error(f"UNKNOW PATHDICT TYPE")
+            raise Exception(path)
         is_reinit = True
-        
+        if adsorb:
+            if "adsorptive_position" in path_dict.keys():
+                self.add_absorptive_positions(path_dict['adsorptive_position'])
         if is_tp is None:
             if euclidean_distance(self.last_move_along_position, path_dict["start_position"]) >= 50:
                 is_tp = True
@@ -252,15 +283,15 @@ class MissionExecutor(BaseThreading):
             self.CFCF.flow_connector.puo.reset_pickup_item_list()
         return self._handle_exception()
     
-    def circle_search(self, center_posi, stop_rule=STOP_RULE_F):
-        points = get_circle_points(center_posi[0],center_posi[1])
-        itt.key_down('w')
+    def circle_search(self, center_posi, stop_rule=STOP_RULE_F, radius=6, stop_func=(lambda:False)):
+        points = get_circle_points(center_posi[0],center_posi[1], radius=radius)
         jil = movement.JumpInLoop(8)
         for p in points:
+            offset_timer = Timer()
             while 1:
+                offset = offset_timer.get_diff_time()*0.2+1.6
                 if self.checkup_stop_func():return
-                movement.move_to_posi_LoopMode(p, self.checkup_stop_func)
-                if euclidean_distance(p, genshin_map.get_position())<=2.2:
+                if movement.move_to_posi_LoopMode(p, self.checkup_stop_func, threshold=offset):
                     logger.debug(f"circle_search: {p} arrived")
                     break
                 if stop_rule == STOP_RULE_F:
@@ -271,9 +302,14 @@ class MissionExecutor(BaseThreading):
                     if combat_lib.CSDL.get_combat_state():
                         itt.key_up('w')
                         return True
+                if stop_func():
+                    return True
+
                 jil.jump_in_loop()
                     
         itt.key_up('w')
+        logger.info(f'circle search fail. back.')
+        movement.move_to_position(center_posi, stop_func=self.checkup_stop_func)
         return False        
     
     def start_pickup(self):
@@ -285,7 +321,15 @@ class MissionExecutor(BaseThreading):
             
     def exec_mission(self):
         pass
-    
+
+    def add_absorptive_positions(self, positions:t.List):
+        logger.info(f"add pos: {positions}")
+        for i in positions:
+            if self.PUO_initialized:
+                self.PUO.add_absorptive_position(i)
+            else:
+                logger.error(f"Add absorptive position fail: puo has not been initialized.")
+
     def _reg_exception_found_enemy(self, state=True):
         self.exception_list["FoundEnemy"] = state
 
@@ -376,10 +420,12 @@ class MissionExecutor(BaseThreading):
         self.pause_threading()
     
 if __name__ == '__main__':
-    me = MissionExecutor(is_CCT=True)
+    me = MissionExecutor(is_CCT=True, is_TMCF=True)
     # me.exception_flag = True
     # me._handle_exception()
     # me.start_combat(mode="Shield")
-    me.circle_search([ 3834.9886,-6978.8201])
+    # me.circle_search([ 3834.9886,-6978.8201])
+    me._init_sub_threading('TMCF')
+    me._recover()
     while 1: time.sleep(1)
 

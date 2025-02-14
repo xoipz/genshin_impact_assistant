@@ -12,6 +12,7 @@ import typing as t
 ROOT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SOURCE_PATH = ROOT_PATH + '\\source'
 ASSETS_PATH = ROOT_PATH + '\\assets'
+CACHE_PATH = ROOT_PATH + "\\cache"
 if sys.path[0] != ROOT_PATH:   sys.path.insert(0, ROOT_PATH)
 if sys.path[1] != SOURCE_PATH: sys.path.insert(1, SOURCE_PATH)
 
@@ -32,11 +33,15 @@ t
 DEBUG_MODE = GIAconfig.General_DEBUG
 DEMO_MODE = CV_DEBUG_MODE = os.path.exists(os.path.join(ROOT_PATH, 'demomode.giamode'))
 CV_DEBUG_MODE = os.path.exists(os.path.join(ROOT_PATH, 'cvdebugmode.giamode'))
+THE_COMPUTER_IS_TOO_GOOD = os.path.exists(os.path.join(ROOT_PATH, 'pcgood.giamode'))
 INTERACTION_MODE = GIAconfig.General_InteractionMode
 IS_DEVICE_PC = True
 
+
 # load config file
-def load_json(json_name='General.json', folder_path='config\\settings', auto_create = False) -> Union[dict,list]:
+
+
+def load_json(json_name='General.json', folder_path='config\\settings', auto_create = False, all_path:str=None) -> Union[dict,list]:
     """加载json.
 
     Args:
@@ -52,7 +57,8 @@ def load_json(json_name='General.json', folder_path='config\\settings', auto_cre
     """
     # if "$lang$" in default_path:
     #     default_path = default_path.replace("$lang$", GLOBAL_LANG)
-    all_path = os.path.join(ROOT_PATH, folder_path, json_name)
+    if all_path is None:
+        all_path = os.path.join(ROOT_PATH, folder_path, json_name)
     try:
         return json.load(open(all_path, 'r', encoding='utf-8'), object_pairs_hook=OrderedDict)
     except:
@@ -62,7 +68,7 @@ def load_json(json_name='General.json', folder_path='config\\settings', auto_cre
         else:
             json.dump({}, open(all_path, 'w', encoding='utf-8'))
             return json.load(open(all_path, 'r', encoding='utf-8'))
-        
+
 
 
 # try:
@@ -211,6 +217,9 @@ def points_angle(p1, target_posi, coordinate=ANGLE_NORMAL):
     if coordinate == ANGLE_NEGATIVE_Y:
         y = -y
         ty = -ty
+    if abs((tx - x)) <= 0.05: # in case of dividing by zero
+        tx = 0.05
+        x = 0
     k = (ty - y) / (tx - x)
     degree = math.degrees(math.atan(k))
     if degree < 0:
@@ -235,7 +244,7 @@ def add_angle(angle, delta):
         print(angle)
     return angle
 
-def save_json(x, json_name='General.json', default_path='config\\settings', sort_keys=True, auto_create=False):
+def save_json(x, json_name='General.json', default_path=f'{ROOT_PATH}\\config\\settings', sort_keys=True, auto_create=False, all_path:str=None):
     """保存json.
 
     Args:
@@ -247,11 +256,23 @@ def save_json(x, json_name='General.json', default_path='config\\settings', sort
     """
     if not os.path.exists(default_path):
         logger.error(f"CANNOT FIND PATH: {default_path}")
+    if all_path is None:
+        all_path = os.path.join(default_path, json_name)
     if sort_keys:
-        json.dump(x, open(os.path.join(default_path, json_name), 'w', encoding='utf-8'), sort_keys=True, indent=2,ensure_ascii=False)
+        json.dump(x, open(all_path, 'w', encoding='utf-8'), sort_keys=True, indent=2,ensure_ascii=False)
     else:
-        json.dump(x, open(os.path.join(default_path, json_name), 'w', encoding='utf-8'),
+        json.dump(x, open(all_path, 'w', encoding='utf-8'),
               ensure_ascii=False)
+
+def get_name(x):
+    (filename, line_number, function_name, text) = x
+    # = traceback.extract_stack()[-2]
+    return text[:text.find('=')].strip()
+
+def auto_name():
+    return get_name(traceback.extract_stack()[-2])
+
+AN = auto_name
 
 def verify_path(root):
     if not os.path.exists(root):
@@ -331,15 +352,15 @@ def quick_euclidean_distance_plist(p1, plist, max_points_num = 50)-> np.ndarray:
     nearly_pp_arg = np.argsort(md)
     ed = md.copy()
     # 计算当前点到距离最近的50个优先点的欧拉距离
-    # cache_num = min(max_points_num, len(nearly_pp_arg))
-    i = 0
+    cache_num = min(max_points_num, len(nearly_pp_arg))
+    times = 0
     for i in nearly_pp_arg:
         ed[i] = euclidean_distance(plist[i], p1)
-        i += 1
-        if i >= max_points_num:
+        times += 1
+        if times >= max_points_num:
             break
-    # nearly_pp = plist[nearly_pp_arg[:cache_num]]
-    # ed = euclidean_distance_plist(p1, nearly_pp)
+    nearly_pp = plist[nearly_pp_arg[:cache_num]]
+    ed = euclidean_distance_plist(p1, nearly_pp)
     return ed
 
     # 将点按欧拉距离升序排序
@@ -352,6 +373,47 @@ def quick_euclidean_distance_plist(p1, plist, max_points_num = 50)-> np.ndarray:
 
     return np.sqrt((p1[0] - plist[:,0]) ** 2 + (p1[1] - plist[:,1]) ** 2)
 
+
+def quick_sort_euclidean_distance_plist(p1, plist, max_points_num=50, reserve = False) -> np.ndarray:
+    """快速欧氏距离.使用曼哈顿算法快速计算,后计算当前点到距离最近的max_points_num个优先点的欧拉距离
+
+    Args:
+        p1 (_type_): 同euclidean_distance_plist
+        plist (_type_): 同euclidean_distance_plist
+        max_points_num (int, optional): _description_. Defaults to 50.
+
+    Returns:
+        np.ndarray: _description_
+    """
+    if not isinstance(p1, np.ndarray):
+        p1 = np.array(p1)
+    if not isinstance(plist, np.ndarray):
+        plist = np.array(plist)
+    # 计算当前点到所有优先点的曼哈顿距离
+    md = manhattan_distance_plist(p1, plist)
+    nearly_pp_arg = np.argsort(md)
+    if reserve:
+        nearly_pp_arg=nearly_pp_arg[::-1]
+    ed = md.copy()
+    # 计算当前点到距离最近的50个优先点的欧拉距离
+    cache_num = min(max_points_num, len(nearly_pp_arg))
+    times = 0
+    for i in nearly_pp_arg:
+        ed[i] = euclidean_distance(plist[i], p1)
+        times += 1
+        if times >= max_points_num:
+            break
+    nearly_pp = plist[nearly_pp_arg[:cache_num]]
+    ed = euclidean_distance_plist(p1, nearly_pp)
+    # return ed
+
+    # 将点按欧拉距离升序排序
+    nearly_pp_arg = np.argsort(ed)
+    nearly_pp = nearly_pp[nearly_pp_arg]
+    # print(currentp, closest_pp)
+    return nearly_pp
+
+    return np.sqrt((p1[0] - plist[:, 0]) ** 2 + (p1[1] - plist[:, 1]) ** 2)
 
 
 def is_number(s):
@@ -428,6 +490,11 @@ def crop(image, area):
         image = cv2.copyMakeBorder(image, *border, borderType=cv2.BORDER_CONSTANT, value=(0, 0, 0))
     return image
 
+def round_list(x:list, n:int):
+    for i in range(len(x)):
+        x[i] = round(x[i], n)
+    return x.copy()
+
 def recorp(image, area, size=None):
     if size is None:
         size=[1920,1080,3]
@@ -449,7 +516,7 @@ def get_color(image, area):
     return color[:3]
 
 
-def get_bbox(image, black_offset=15):
+def asset_get_bbox(image, black_offset=15):
     """
     A numpy implementation of the getbbox() in pillow.
     Args:
@@ -722,7 +789,7 @@ def circle_mask(img,inner_r, outer_r):
     
     return masked_img
 
-def get_circle_points(x,y,  show_res = False):
+def get_circle_points(x,y,  show_res = False, radius=6):
     """围绕圆心绘制离散点.
 
     Args:
@@ -737,7 +804,7 @@ def get_circle_points(x,y,  show_res = False):
         import turtle
         turtle.speed(0)
     points = []
-    for r in range(5, 5*6, 5):
+    for r in range(5, 5*(radius+1), 5):
         n = int(2 * math.pi * r / (5))
         for i in range(n):
             angle = 2 * math.pi / n * i
@@ -867,9 +934,50 @@ def match_multiple_img(img, template, is_gray=False, is_show_res: bool = False, 
 
     return matched_coordinates
 
+def diff_angle(a1, a2):
+    return min(360-(int(a1-a2)%360), (int(a1-a2)%360))
+    
+
+def ansl_code2col(ansl_code ,reserve = True):
+    if ansl_code == "0":
+        if not reserve:
+            return 'white'
+        else:
+            return 'black'
+    elif ansl_code == "31":
+        return "red"
+    elif ansl_code == "32":
+        return "green"
+    elif ansl_code == "33":
+        if reserve:
+            return "olive"
+        else:
+            return 'yellow'
+    elif ansl_code == "34":
+        if reserve:
+            return "blue"
+        else:
+            return "#00FFFF"
+    elif ansl_code == "35":
+        return "green"
+    elif ansl_code == "36":  # cyan
+        return "#0099CC"
+    elif ansl_code == "37":  # white
+        if reserve:
+            return "black"
+        else:
+            return "white"
+
+    return "NO_COL"
+
+verify_path(CACHE_PATH)
+
 if __name__ == '__main__':
     # a = load_jsons_from_folder(os.path.join(root_path, "config\\tactic"))
-    print(load_json("team_example_1.json", fr"{CONFIG_PATH}/tactic"))
-    print()
+    # print(load_json("team_example_1.json", fr"{CONFIG_PATH}/tactic"))
+    a = quick_euclidean_distance_plist([0,0], [[1,2],[2,3],[4,5],[100,201],[-1,-1],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201],[100,201]])
+    a = quick_euclidean_distance_plist([0, 0], [])
+    print(a)
+    print(len(a))
     pass
     # load_jsons_from_floder((root_path, "config\\tactic"))

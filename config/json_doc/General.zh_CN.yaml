@@ -92,3 +92,17 @@ BlossomType:
 CollectionTimes:
   doc: 采集次数
 
+RecordPath_CollectionType:
+  doc: 采集物品类型。
+  annotation: Plant-植物；Artifact-圣遗物；Combat-战斗。
+
+RecordPath_CollectionName:
+  doc: 采集物品名称
+
+DisableF:
+  doc: 禁用自动F键
+  annotation: 在调试自定义任务时使用。
+
+UseAllPositionToCorrectionWhenItemNameNotFound:
+  doc: 修正坐标时，在找不到对应物品名时，使用所有点位进行匹配
+  annotation: 用于自动吸附点位：如果输入的采集物名没有数据时，就使用所有采集点位匹配。如果坐标修正混乱了可以关闭此项。

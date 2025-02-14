@@ -13,18 +13,21 @@ from source.common.timer_module import FileTimer
 # 看不懂也没关系,反正也没啥影响,能跑就行(
 
 class CommissionParser():
-    TRAVERSE_MONDSTADT_POSITION = [TianLiPosition([783.450352, -6943.497652]),
-                                   TianLiPosition([2489.331552, -6101.094052]),
-                                   TianLiPosition([3101.988752, -6431.458452]),
-                                   TianLiPosition([2860.607952, -5526.280452]),
-                                   TianLiPosition([2289.885552, -5515.029652]),
-                                   TianLiPosition([1698.707152, -5273.648852]),
-                                   TianLiPosition([2224.426352, -4798.046852]),
-                                   TianLiPosition([2156.921552, -3923.552852]),
-                                   TianLiPosition([2423.872352, -3427.494852]),
-                                   TianLiPosition([3367.916752, -4196.640452]),
-                                   TianLiPosition([3328.027552, -5106.932452])]
-
+    TRAVERSE_MONDSTADT_POSITION=[TianLiPosition([783.450352, -6943.497652]),
+                                 TianLiPosition([2489.331552, -6101.094052]),
+                                 TianLiPosition([3101.988752, -6431.458452]),
+                                 TianLiPosition([2860.607952, -5526.280452]),
+                                 TianLiPosition([2289.885552, -5515.029652]),
+                                 TianLiPosition([1698.707152, -5273.648852]),
+                                 TianLiPosition([2224.426352, -4798.046852]),
+                                 TianLiPosition([2156.921552, -3923.552852]),
+                                #  TianLiPosition([2423.872352, -3427.494852]),
+                                 TianLiPosition([2423.872352, -3227.494852]),
+                                 TianLiPosition([3367.916752, -4196.640452]),
+                                 TianLiPosition([3328.027552, -5106.932452])]
+    
+    
+    
     def __init__(self) -> None:
         self.commission_dicts = []
 
@@ -38,8 +41,8 @@ class CommissionParser():
             ui_control.ensure_page(UIPages.page_bigmap)
             # genshin_map._switch_to_area("Mondstadt")
             genshin_map.get_bigmap_posi()
-            genshin_map._move_bigmap(posi.tianli, force_center=True)
-            cap_posi = [220, 240, 1920 - 200, 1080 - 150]
+            genshin_map._move_bigmap(posi.gimap, force_center = True)
+            cap_posi = [220,240,1920-200,1080-150]
             img = itt.capture(jpgmode=NORMAL_CHANNELS)
             img = crop(img, cap_posi)
             img = recorp(img, cap_posi)

@@ -9,9 +9,13 @@ import numpy as np
 import win32api
 import win32gui
 from source.common import static_lib
-from source.manager import img_manager, text_manager, button_manager
+from source.manager import img_manager, text_manager, button_manager, Bbox, text_icon
 from source.common.timer_module import timer
 from source.common.timer_module import TimeoutTimer, Timer, AdvanceTimer
+from source.ocr.models import LOCAL_OCR_MODEL
+from pponnxcr.predict_system import BoxedResult
+
+
 
 
 IMG_RATE = 0
@@ -156,7 +160,57 @@ class InteractionBGD:
 
     # @timer
 
+    def is_vaild_handel(self):
+        d = itt.capture_obj
+        return d._check_shape(d._cover_privacy(d._get_capture()))
+
+    def ocr_single_line(self, imgicon: img_manager.ImgIcon) -> str:
+        upper_func_name = inspect.getframeinfo(inspect.currentframe().f_back)[2]
+        cap = self.capture(posi=imgicon.cap_posi, jpgmode=imgicon.jpgmode)
+        r_text = LOCAL_OCR_MODEL.ocr_single_line(cap)
+        if imgicon.is_print_log(1 >= imgicon.threshold):
+            logger.trace('imgname: ' + imgicon.name + 'text result: ' + r_text + ' |function name: ' + upper_func_name)
+        return r_text
+
+    def ocr_lines(self,imgicon: img_manager.ImgIcon) -> list:
+        upper_func_name = inspect.getframeinfo(inspect.currentframe().f_back)[2]
+        cap = self.capture(posi=imgicon.cap_posi, jpgmode=imgicon.jpgmode)
+        r_texts = LOCAL_OCR_MODEL.ocr_lines(cap)
+        if imgicon.is_print_log(1 >= imgicon.threshold):
+            logger.trace('imgname: ' + imgicon.name + 'text result: ' + r_texts + ' |function name: ' + upper_func_name)
+        return r_texts
+
+    def detect_and_ocr(self, imgicon: img_manager.ImgIcon):
+        r : t.List[BoxedResult]
+        r = LOCAL_OCR_MODEL.detect_and_ocr(imgicon.image)
+
+
+    def get_img_bbox(self, imgicon: img_manager.ImgIcon) -> Bbox:
+        upper_func_name = inspect.getframeinfo(inspect.currentframe().f_back)[2]
+        cap = self.capture(posi=imgicon.cap_posi, jpgmode=imgicon.jpgmode)
+        matching_rate, max_loc = similar_img(cap, imgicon.image, ret_mode=IMG_POSI)
+        bbox = Bbox(imgicon.cap_posi[0], imgicon.cap_posi[1], imgicon.cap_posi[0]+max_loc[0], imgicon.cap_posi[1]+max_loc[1])
+        #TODO: a better way to detect text
+
+        # if matching_rate >= imgicon.threshold:
+        #     if imgicon.win_text != None:
+        #         from source.api.pdocr_complete import ocr
+        #         r = ocr.get_text_position(cap, imgicon.win_text)
+        #         if r==-1:
+        #             matching_rate = -1
+        if imgicon.is_print_log(matching_rate >= imgicon.threshold):
+            logger.trace('imgname: ' + imgicon.name + 'max_loc: ' + str(max_loc) + ' |function name: ' + upper_func_name)
+
+        if matching_rate >= imgicon.threshold:
+            return bbox
+        else:
+            return None
+
+
+
+
     def get_img_position(self, imgicon: img_manager.ImgIcon, is_gray=False, is_log=False):
+        # Abandoned. Please use "get_img_bbox" instead.
         """获得图片在屏幕上的坐标
 
         Args:
@@ -179,8 +233,8 @@ class InteractionBGD:
         if matching_rate >= imgicon.threshold:
             if imgicon.win_text != None:
                 from source.api.pdocr_complete import ocr
-                r = ocr.get_text_position(cap, imgicon.win_text)
-                if r==-1:
+                r = ocr.get_text_position_v2(cap, imgicon.win_text)
+                if len(r)==0:
                     matching_rate = -1
             # if imgicon.win_page != 'all':
             #     pn = scene_lib.get_current_pagename()
@@ -188,7 +242,7 @@ class InteractionBGD:
             #         matching_rate = -2
 
         if imgicon.is_print_log(matching_rate >= imgicon.threshold):
-            logger.debug('imgname: ' + imgicon.name + 'max_loc: ' + str(max_loc) + ' |function name: ' + upper_func_name)
+            logger.trace('imgname: ' + imgicon.name + 'max_loc: ' + str(max_loc) + ' |function name: ' + upper_func_name)
 
         if matching_rate >= imgicon.threshold:
             return max_loc
@@ -218,8 +272,8 @@ class InteractionBGD:
         if matching_rate >= imgicon.threshold:
             if imgicon.win_text != None:
                 from source.api.pdocr_complete import ocr
-                r = ocr.get_text_position(cap, imgicon.win_text)
-                if r==-1:
+                r = ocr.get_text_position_v2(cap, imgicon.win_text)
+                if len(r)==0:
                     matching_rate = 0
             # if imgicon.win_page != 'all':
             #     pn = scene_lib.get_current_pagename()
@@ -231,7 +285,7 @@ class InteractionBGD:
             cv2.waitKey(100)
 
         if imgicon.is_print_log(matching_rate >= imgicon.threshold) and is_log:
-            logger.debug(
+            logger.trace(
                 'imgname: ' + imgicon.name + 'matching_rate: ' + str(
                     matching_rate) + ' |function name: ' + upper_func_name)
         if ret_mode == IMG_BOOL:
@@ -246,23 +300,34 @@ class InteractionBGD:
                 return False
         elif ret_mode == IMG_RATE:
             return matching_rate
-        
-    def get_text_existence(self, textobj: text_manager.TextTemplate, is_gray=False, is_log = True, ret_mode = IMG_BOOL, show_res = False, use_cache = False):
+
+    def get_text_existence(self, textobj: text_manager.TextTemplate, is_gray=False, ret_mode = IMG_BOOL, show_res = False, use_cache = False):
         from source.api.pdocr_complete import ocr
         cap = self.capture(posi = textobj.cap_area, jpgmode=NORMAL_CHANNELS, recapture_limit=(self.RECAPTURE_LIMIT if use_cache else 0))
-        if ocr.get_text_position(cap, textobj.text) != -1:
-            if is_log:
-                logger.debug(f"get_text_existence: text: {textobj.text} Found")
-            return True
-        else:
-            logger.debug(f"get_text_existence: text: {textobj.text} Not Found")
-            return False
+        # res = LOCAL_OCR_MODEL.ocr_lines(cap)
+        res = ocr.get_all_texts(cap)
+        is_exist = textobj.match_results(res)
+        if textobj.is_print_log(is_exist):
+            logger.trace(f"get_text_existence: text: {textobj.text} {'Found' if is_exist else 'Not Found'}")
+        return is_exist
+
+    def get_text_icon_existence(self, textobj: text_icon.TextIconTemplate, is_gray=False, ret_mode = IMG_BOOL, show_res = False, use_cache = False):
+        cap = self.capture(posi = textobj.cap_area, jpgmode=NORMAL_CHANNELS, recapture_limit=(self.RECAPTURE_LIMIT if use_cache else 0))
+        res = LOCAL_OCR_MODEL.ocr_lines(cap)
+        is_exist = textobj.match_results(res)
+        if textobj.is_print_log(is_exist):
+            logger.trace(f"get_text_icon_existence: text: {textobj.text} {'Found' if is_exist else 'Not Found'}")
+        return is_exist
 
     def appear(self, obj, use_cache=False):
-        if isinstance(obj, text_manager.TextTemplate):
+        if isinstance(obj, text_icon.TextIconTemplate):
+            return self.get_text_icon_existence(obj, use_cache=use_cache)
+        elif isinstance(obj, text_manager.TextTemplate):
             return self.get_text_existence(obj, use_cache=use_cache)
         elif isinstance(obj, img_manager.ImgIcon): # Button is also an Icon
             return self.get_img_existence(obj, use_cache=use_cache)
+
+
 
     def appear_then_click(self, inputvar, is_gray=False, is_log = DEBUG_MODE):
         """appear then click
@@ -280,11 +345,13 @@ class InteractionBGD:
             upper_func_name = inspect.getframeinfo(inspect.currentframe().f_back)[2]
 
             if not inputvar.click_retry_timer.reached():
+                logger.trace(f'appear_then_click: click_retry_timer not reach, return false')
                 return False
             
             if inputvar.click_fail_timer.reached_and_reset():
-                logger.error(t2t("appear then click fail"))
+                logger.error(t2t("!!!appear then click fail!!!"))
                 logger.info(f"{inputvar.name} {inputvar.click_position}")
+                # TODO: raise exception
                 return False
             
             cap = self.capture(posi=imgicon.cap_posi, jpgmode=imgicon.jpgmode)
@@ -298,12 +365,12 @@ class InteractionBGD:
             if matching_rate >= imgicon.threshold:
                 if imgicon.win_text != None:
                     from source.api.pdocr_complete import ocr
-                    r = ocr.get_text_position(cap, imgicon.win_text)
-                    if r==-1:
+                    r = ocr.get_text_position_v2(cap, imgicon.win_text)
+                    if len(r)==0:
                         matching_rate = 0
             
             if imgicon.is_print_log(matching_rate >= imgicon.threshold) or is_log:
-                logger.debug(
+                logger.trace(
                 'imgname: ' + imgicon.name + 'matching_rate: ' + str(
                     matching_rate) + ' |function name: ' + upper_func_name)
 
@@ -313,7 +380,7 @@ class InteractionBGD:
                     self.move_and_click(position=imgicon.click_position())
                 else:
                     self.move_and_click(position=click_posi)
-                logger.debug(f"appear then click: True: {imgicon.name} func: {upper_func_name}")
+                logger.trace(f"appear then click: True: {imgicon.name} func: {upper_func_name}")
                 inputvar.click_fail_timer.reset()
                 inputvar.click_retry_timer.reset()
                 return True
@@ -332,18 +399,18 @@ class InteractionBGD:
             if matching_rate >= imgicon.threshold:
                 if imgicon.win_text != None:
                     from source.api.pdocr_complete import ocr
-                    r = ocr.get_text_position(cap, imgicon.win_text)
-                    if r==-1:
+                    r = ocr.get_text_position_v2(cap, imgicon.win_text)
+                    if len(r)==0:
                         matching_rate = 0
             
             if imgicon.is_print_log(matching_rate >= imgicon.threshold) or is_log:
-                logger.debug('imgname: ' + imgicon.name + 'matching_rate: ' + str(matching_rate) + ' |function name: ' + upper_func_name)
+                logger.trace('imgname: ' + imgicon.name + 'matching_rate: ' + str(matching_rate) + ' |function name: ' + upper_func_name)
 
             if matching_rate >= imgicon.threshold:
                 p = imgicon.cap_posi
                 center_p = [(p[0] + p[2]) / 2, (p[1] + p[3]) / 2]
                 self.move_and_click([center_p[0], center_p[1]])  
-                logger.debug(f"appear then click: True: {imgicon.name} func: {upper_func_name}")
+                logger.trace(f"appear then click: True: {imgicon.name} func: {upper_func_name}")
                 return True
             else:
                 return False
@@ -352,31 +419,33 @@ class InteractionBGD:
             from source.api.pdocr_complete import ocr
 
             upper_func_name = inspect.getframeinfo(inspect.currentframe().f_back)[2]
-            p1 = ocr.get_text_position(self.capture(jpgmode=NORMAL_CHANNELS, posi=inputvar.cap_area), inputvar.text, cap_posi_leftup=inputvar.cap_area[:2], mode=inputvar.match_mode)
+            p1 = ocr.get_text_position_v2(self.capture(jpgmode=NORMAL_CHANNELS, posi=inputvar.cap_area), inputvar.text, cap_posi_leftup=inputvar.cap_area[:2], mode=inputvar.match_mode)
             if is_log:
-                logger.debug('text: ' + inputvar.text + 'position: ' + str(p1) + ' |function name: ' + upper_func_name)
-            if p1 != -1:
-                self.move_and_click([p1[0] + 5, p1[1] + 5], delay=1)
-                logger.debug(f"appear then click: True: {inputvar.text} func: {upper_func_name}")
+                logger.trace('text: ' + inputvar.text + 'position: ' + str(p1) + ' |function name: ' + upper_func_name)
+            if len(p1)>0:
+                #TODO: more
+                p1 = p1[0]
+                self.move_and_click([(p1[0]+p1[2])/2, (p1[1]+p1[3])/2], delay=1)
+                logger.trace(f"appear then click: True: {inputvar.text} func: {upper_func_name}")
                 return True
             else:
                 return False
     
-    def appear_then_click_groups(self, verify_img:img_manager.ImgIcon, inputvar_list:list, stop_func, verify_mode=False):
-        """
-        Click each inputvar in list.
-        
-        """
-        succ_flags=[False for i in len(inputvar_list)]
-        while 1:
-            time.sleep(0.1)
-            if stop_func:return False
-            if all(succ_flags):
-                if self.get_img_existence(verify_img) == verify_mode:
-                    return True
-            for i in len(inputvar_list):
-                r = self.appear_then_click(inputvar_list[i])
-                if r: succ_flags[i]=True
+    # def appear_then_click_groups(self, verify_img:img_manager.ImgIcon, inputvar_list:list, stop_func, verify_mode=False):
+    #     """
+    #     Click each inputvar in list.
+    #
+    #     """
+    #     succ_flags=[False for i in len(inputvar_list)]
+    #     while 1:
+    #         time.sleep(0.1)
+    #         if stop_func:return False
+    #         if all(succ_flags):
+    #             if self.get_img_existence(verify_img) == verify_mode:
+    #                 return True
+    #         for i in len(inputvar_list):
+    #             r = self.appear_then_click(inputvar_list[i])
+    #             if r: succ_flags[i]=True
                 
 
     def appear_then_press(self, imgicon: img_manager.ImgIcon, key_name, is_gray=False):
@@ -400,15 +469,15 @@ class InteractionBGD:
         if matching_rate >= imgicon.threshold:
             if imgicon.win_text != None:
                 from source.api.pdocr_complete import ocr
-                r = ocr.get_text_position(cap, imgicon.win_text)
-                if r==-1:
+                r = ocr.get_text_position_v2(cap, imgicon.win_text)
+                if len(r)==0:
                     matching_rate = 0
             # if imgicon.win_page != 'all':
             #     pn = scene_lib.get_current_pagename()
             #     if pn != imgicon.win_page:
             #         matching_rate = 0
         if imgicon.is_print_log(matching_rate >= imgicon.threshold):
-            logger.debug(
+            logger.trace(
                 'imgname: ' + imgicon.name + 'matching_rate: ' + str(
                     matching_rate) + 'key_name:' + key_name + ' |function name: ' + upper_func_name)
 
@@ -418,11 +487,12 @@ class InteractionBGD:
         else:
             return False
 
-    def wait_until_stable(self, threshold = 0.9995, timeout = 10):
+    def wait_until_stable(self, threshold = 0.9995, timeout = 10, additional_break_func=lambda x: False):
         timeout_timer = TimeoutTimer(timeout)
         last_cap = self.capture()
+
         pt = time.time()
-        t = AdvanceTimer(0.3, 1)
+        t = AdvanceTimer(0.25, 3).start()
         while 1:
             time.sleep(0.1)
             if timeout_timer.istimeout():
@@ -439,10 +509,10 @@ class InteractionBGD:
                 if DEBUG_MODE: print('wait time: ', time.time()-pt)
                 break
             last_cap = curr_img.copy()
+            if additional_break_func():
+                logger.debug(f"wait_until_stable break: addi func succ")
+                break
 
-        
-        
-        
     
     def extract_white_letters(image, threshold=128):
         """_summary_
@@ -785,11 +855,31 @@ def itt_test(itt: InteractionBGD):
 
 itt = InteractionBGD()
 
+# class InteractionController(ProcessThreading):
+#     def __init__(self):
+#         ProcessThreading.__init__(self)
+#         self.key_press_dict:t.Dict[str, AdvanceTimer] = {}
+#
+#     def loop(self):
+#         for key in self.key_press_dict:
+#             if self.key_press_dict[key].reached():
+#                 self.key_up(key)
+#             else:
+#                 self.key_down(key)
+#
+#     def key_press_duration(self, key, duration: float):
+#         self.key_press_dict[key] = AdvanceTimer(duration).start()
+
+
+
 # ge = source.common.generic_event.GenericEvent()
 # ge.start()
 
 if __name__ == '__main__':
-    ib = InteractionBGD()
+    # ib = InteractionBGD()
+    # itc = InteractionController()
+    # itc.start()
+     #itc.continue_threading()
     # rootpath = "D:\\Program Data\\vscode\\GIA\\genshin_impact_assistant\\dist\\imgs"
     # ib.similar_img_pixel(cv2.imread(rootpath+"\\yunjin_q.png"),cv2.imread(rootpath+"\\zhongli_q.png"))
     # from source.manager import asset
@@ -818,8 +908,9 @@ if __name__ == '__main__':
         # print(ib.get_img_existence(img_manager.motion_flying), ib.get_img_existence(img_manager.motion_climbing),
         #       ib.get_img_existence(asset.motion_swimming))
         time.sleep(2)
+        # itc.key_press_duration('w', 0.5)
         # ib.move_and_click([100,100], type="left")
-        ib.wait_until_stable()
+        # ib.wait_until_stable()
         # print(ib.get_img_existence(img_manager.USE_20X2RESIN_DOBLE_CHOICES))
         # ib.appear_then_click(imgname=asset.USE_20RESIN_DOBLE_CHOICES)
         # ib.move_to(100,100)

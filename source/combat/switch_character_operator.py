@@ -69,12 +69,12 @@ class SwitchCharacterOperator(BaseThreading):
             if self.mode == 'Shield':
                 self.aim_operator.pause_threading()
                 self.switch_character(switch_type="SHIELD")
-                time.sleep(0.4)
+                time.sleep(1)
             else:
                 if self.aim_operator.sco_blocking_request.is_blocking():
                     self.aim_operator.sco_blocking_request.reply_request()
                     logger.debug("sco_blocking_request")
-                    self.switch_character(switch_type="SHIELD")
+                    self.switch_character(switch_type="AFK")
                     time.sleep(0.2)
                     continue
                 if self.tactic_operator.get_working_statement():  # tactic operator working
@@ -91,6 +91,7 @@ class SwitchCharacterOperator(BaseThreading):
                         self.switch_character(switch_type="MAIN")
 
     def _check_and_reborn(self, x) -> bool:
+        #TODO: Optimize
         """重生角色
 
         Returns:
@@ -101,6 +102,12 @@ class SwitchCharacterOperator(BaseThreading):
             aopf = self.aim_operator.pause_threading_flag
             if not aopf:
                 self.aim_operator.pause_threading()
+            while 1:
+                siw()
+                if self.checkup_stop_func(): return
+                logger.debug("waiting aim operator pause...")
+                if self.aim_operator.is_thread_paused():
+                    break
             succ_flag_1 = False
             print(self.died_character)
             for i in range(10):
@@ -177,6 +184,12 @@ class SwitchCharacterOperator(BaseThreading):
             elif switch_type == "MAIN":
                 if chara.position == 'Main':
                     tg = 'a,a,a,a,a'
+            elif switch_type == 'AFK':
+                if chara.is_position_ready('SHIELD'):
+                    tg = chara.tactic_group
+                    tg+=';a'
+                elif chara.position == 'Main':
+                    tg = '2000;a;4000'
             if tg != None:
                 self.current_character_num = combat_lib.get_current_chara_num(self.checkup_stop_func)
                 logger.debug(
@@ -255,11 +268,12 @@ class SwitchCharacterOperator(BaseThreading):
             self.tactic_operator.pause_threading()
             self.aim_operator.pause_threading()
 
-    def continue_threading(self):
+    def continue_threading(self, reget_characters_name = True):
         if self.pause_threading_flag != False:
             logger.info(f"SCO is getting the character list")
-            self.chara_list = combat_lib.get_chara_list()
-            self.chara_list.sort(key=sort_flag_1, reverse=False)
+            if reget_characters_name or (self.chara_list is None):
+                self.chara_list = combat_lib.get_chara_list()
+                self.chara_list.sort(key=sort_flag_1, reverse=False)
             self.chara_trigger_list = self.chara_list
             self.pause_threading_flag = False
             self.tactic_operator.set_parameter(None, None)

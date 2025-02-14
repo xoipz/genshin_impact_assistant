@@ -4,7 +4,13 @@ from source.manager.button_manager import Button
 from source.manager.text_manager import TextTemplate, Text
 from source.manager.posi_manager import PosiTemplate, Area
 from source.api.utils import *
+"""
+OLD
 
+DO NOT ADD ANY NEW ASSET HERE. 
+USE SOURCE/ASSETS INSTEAD.
+
+"""
 # Button&ImgIcon&Area
 ButtonUISwitchToTimeMenu = Button(black_offset = 15, print_log=LOG_WHEN_TRUE)
 ButtonGeneralExit = Button(print_log=LOG_WHEN_TRUE)
@@ -53,7 +59,7 @@ ButtonUIEnterPartySetup = Button()
 CombatButtonGoToFight = Button()
 ButtonCombatSwitchTeamLeft = Button(threshold=0)
 ButtonCombatSwitchTeamRight = Button(threshold=0)
-IconUIPartySetup = ImgIcon(threshold=0.96)
+IconUIPartySetup = ImgIcon(threshold=0.96,print_log=LOG_WHEN_TRUE)
 AreaCombatPartySetupCharaName1=Area()
 AreaCombatPartySetupCharaName2=Area()
 AreaCombatPartySetupCharaName3=Area()
@@ -74,6 +80,7 @@ QTSX = TextTemplate(text={"zh_CN":"七天神像","en_US":"Statues of The Seven"}
 CSMD = TextTemplate(text={"zh_CN":"传送锚点","en_US": "Teleport Waypoint"}, cap_area = AreaBigmapChoose.position)
 ASmallStepForHilichurls = TextTemplate(text={"zh_CN":"丘丘人的一小步", "en_US": "A Small Step for"})
 IncreasingDanger = TextTemplate(text={"zh_CN":"攀高危险", "en_US": "Increasing Danger"})
+ImpregnableDefense = TextTemplate(text={"zh_CN":"固若金汤", "en_US": "Impregnable Defense"})
 Emergency = TextTemplate(text={"zh_CN":"临危受命", "en_US": "Emergency"})
 IcyIssues = TextTemplate(text={"zh_CN":"冷冰冰的大麻烦", "en_US": "Icy Issues"})
 ForTheHarbingers = TextTemplate(text={"zh_CN":"为了执行官大人", "en_US": "For The Harbingers"})
@@ -85,13 +92,14 @@ MapAreaMD = TextTemplate(text={"zh_CN":"蒙德", "en_US":"Mondstadt"}, cap_area 
 MapAreaLY = TextTemplate(text={"zh_CN":"璃月", "en_US":"Liyue"}, cap_area = AreaBigmapSwitchMap.position, match_mode = ACCURATE_MATCHING)
 MapAreaDQ = TextTemplate(text={"zh_CN":"稻妻", "en_US":"Inazuma"}, cap_area = AreaBigmapSwitchMap.position, match_mode = ACCURATE_MATCHING)
 MapAreaXM = TextTemplate(text={"zh_CN":"须弥", "en_US":"Sumeru"}, cap_area = AreaBigmapSwitchMap.position, match_mode = ACCURATE_MATCHING)
+MapAreaFD = TextTemplate(text={"zh_CN":"枫丹", "en_US":"Fontaine"}, cap_area = AreaBigmapSwitchMap.position, match_mode = ACCURATE_MATCHING)
 MapAreaCYJY = TextTemplate(text={"zh_CN":"层岩巨渊", "en_US":"The Chasm"}, cap_area = AreaBigmapSwitchMap.position)
 claim_rewards = TextTemplate(text={'zh_CN': '领取奖励',"en_US": "Claim Rewards"})
 use_20x2resin = TextTemplate(text={'zh_CN': '使用浓缩树脂',"en_US": "Use Condensed Resin"})
 use_20resin = TextTemplate(text={'zh_CN': '使用原粹树脂',"en_US": "Use Original Resin"})
 conti_challenge = TextTemplate(text={'zh_CN': '继续挑战',"en_US": "Continue Challenge"})
 exit_challenge = TextTemplate(text={'zh_CN': '退出秘境',"en_US": "Leave Domain"})
-domain_obtain = TextTemplate(text={'zh_CN': '获得',"en_US": "Obtained"})
+TextDomainObtain = TextTemplate(text={'zh_CN': '获得', "en_US": "Obtained"})
 use_revival_item = TextTemplate(text={'zh_CN': '用道具',"en_US": "revival item"})
 revival = Text(zh="复苏", en="Revive")
 LEAVING_IN = TextTemplate(text={'zh_CN': '自动退出',"en_US": 'Leaving in'}, cap_area = AreaDomainLeaveIn.position)
@@ -100,6 +108,3 @@ LEY_LINE_DISORDER = TextTemplate(text={'zh_CN': '地脉异常',"en_US": "Ley Lin
 # ImgIcon&Button which based on text
 IconCombatCharacterDied = ImgIcon(win_text = use_revival_item.text, threshold=0.98, print_log=LOG_WHEN_TRUE)
 ButtonGeneralAllCharacterDied = Button(threshold=0.988, win_text=revival.text, print_log=LOG_WHEN_TRUE)
-
-if __name__ == '__main__':
-    ButtonUIEnterPartySetup.show_image()

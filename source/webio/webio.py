@@ -13,7 +13,7 @@ from source.webio.webpages.collector_settings import CollectorSettingPage
 from source.webio.webpages.mission import MissionPage
 from source.webio.webpages.missiondownload import MissionDownloadPage
 from source.webio.webpages.video2path import VideoToPathPage
-from source.webio.webpages.tavern2mission import Tavern2Mission
+from source.webio.webpages.TLPath2mission import TLPath2Mission
 
 status = True
 global first_run
@@ -44,7 +44,8 @@ def main():
     # webio.manager.reg_page("CollectorSettingPage", CollectorSettingPage())
     webio.manager.reg_page("MissionPage", MissionPage())
     webio.manager.reg_page("MissionDownloadPage", MissionDownloadPage())
-    webio.manager.reg_page("convert kongying Tavern's route to mission", Tavern2Mission())
+    # webio.manager.reg_page("convert kongying Tavern's route to mission", Tavern2Mission())
+    webio.manager.reg_page("Edit Path & Make Mission", TLPath2Mission())
     webio.manager.reg_page("VideoToPathPage", VideoToPathPage())
     webio.manager.load_page('MainPage')
     if not first_run:
@@ -80,6 +81,20 @@ def session_check_thread():
         pywebio.session.get_current_session()
         status = True
         time.sleep(0.1)'''
+import asyncio
+
+def server_thread():
+    # https://zhuanlan.zhihu.com/p/101586682
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    platform.tornado.start_server(main, auto_open_webbrowser=False, port=22268, debug=False, )
+
 
 if __name__ == '__main__':
-    platform.tornado.start_server(main, auto_open_webbrowser=True, debug=True)
+    import threading
+    threading.Thread(target=server_thread, daemon=False).start()
+    while 1:
+        time.sleep(1)
+    # platform.tornado.start_server(main, auto_open_webbrowser=True, debug=True)
+
+
