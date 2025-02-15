@@ -147,8 +147,14 @@
     ],
     "codecheck.ExcludeDirectory": "",
     "codecheck.ScanDirectory": "source",
-    "window.zoomLevel": 1,
     "i18n-ally.localesPaths": [
         "translation/locale"
-    ]
+    ],
+    "python.defaultInterpreterPath": "D:\\code\\python\\Now\\genshin_impact_assistant\\venv\\python.exe",
+    "python.pythonPath": "D:\\code\\python\\Now\\genshin_impact_assistant\\venv\\python.exe",
+    "python.analysis.extraPaths": ["${workspaceFolder}"],
+    "python.terminal.activateEnvironment": false,
+    "code-runner.executorMap": {
+        "python": "D:\\code\\python\\Now\\genshin_impact_assistant\\venv\\python.exe"
+    }
 }

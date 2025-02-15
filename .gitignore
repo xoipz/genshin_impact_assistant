@@ -226,3 +226,4 @@ config/cookies/web_genshin_cookies.json
 local_edit_missions/
 
 *.giamode
+.vscode

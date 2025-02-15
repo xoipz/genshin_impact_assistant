@@ -19,7 +19,7 @@ from source.pickup.yolov8_recognizer import find_possible_spoils, move_to_possib
 
 
 # USE_YAP = False if sys.gettrace() else True
-USE_YAP = True # Fixed!!! print debug is useful.
+USE_YAP = False # Fixed!!! print debug is useful.
 # if sys.gettrace():
 #     logger.warning("YAP disabled in debug mode. Pickupper may work slower.")
 
