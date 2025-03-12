@@ -4,7 +4,7 @@ import sys
 current_file_path = __file__
 directory_path = os.path.dirname(current_file_path)
 root_path = os.path.join(directory_path, "..", "..")
-sys.path.append(root_path)
+sys.path.insert(0, root_path)
 
 import time
 from source.commission.commission_executor import CommissionExecutor

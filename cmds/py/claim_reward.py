@@ -4,7 +4,7 @@ import sys
 current_file_path = __file__
 directory_path = os.path.dirname(current_file_path)
 root_path = os.path.join(directory_path, "..", "..")
-sys.path.append(root_path)
+sys.path.insert(0, root_path)
 
 from utils.windowUtils import focus_on_program
 from source.task.claim_reward.claim_reward import ClaimRewardMission, ClaimRewardTask

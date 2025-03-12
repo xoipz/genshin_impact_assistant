@@ -1,8 +1,9 @@
 import re
 import typing as t
+from typing import ClassVar
 
 from cached_property import cached_property
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from source.device.alas.config_utils import *
 from source.map.extractor.convert import MapConverter
@@ -17,6 +18,8 @@ class PointItemModel(BaseModel):
 
 
 class PointInfoModel(BaseModel):
+    model_config = ConfigDict(ignored_types=(cached_property,))
+    
     content: str
     hiddenFlag: int
     id: int
@@ -30,11 +33,12 @@ class PointInfoModel(BaseModel):
     version: int
     videoPath: str
 
-    class Config:
-        keep_untouched = (cached_property,)
+    first_item: ClassVar[t.Optional[PointItemModel]] = cached_property(lambda self: self._get_first_item())
+    teleporter: ClassVar[t.Optional[str]] = cached_property(lambda self: self._get_teleporter())
+    position_tuple: ClassVar[t.Tuple[float, float]] = cached_property(lambda self: self._get_position_tuple())
+    teleporter_name: ClassVar[str] = cached_property(lambda self: self._get_teleporter_name())
 
-    @cached_property
-    def first_item(self) -> t.Optional[PointItemModel]:
+    def _get_first_item(self) -> t.Optional[PointItemModel]:
         for item in self.itemList:
             if item.iconTag == '传送锚点':
                 return item
@@ -46,8 +50,7 @@ class PointInfoModel(BaseModel):
                 return item
         return None
 
-    @cached_property
-    def teleporter(self) -> t.Optional[str]:
+    def _get_teleporter(self) -> t.Optional[str]:
         tag = self.first_item.iconTag
         if tag == '传送锚点':
             return MapConverter.TP_Teleporter
@@ -59,15 +62,13 @@ class PointInfoModel(BaseModel):
             return MapConverter.TP_Domain
         return None
 
-    @cached_property
-    def position_tuple(self) -> t.Tuple[float, float]:
+    def _get_position_tuple(self) -> t.Tuple[float, float]:
         x, y = self.position.split(',')
         x = float(x)
         y = float(y)
         return x, y
 
-    @cached_property
-    def teleporter_name(self) -> str:
+    def _get_teleporter_name(self) -> str:
         if self.first_item.iconTag == '传送锚点' or '神像' in self.first_item.iconTag:
             if self.first_item.itemId == 758:
                 return '三界路飨祭'

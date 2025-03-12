@@ -3,7 +3,7 @@ import os
 current_file_path = __file__
 directory_path = os.path.dirname(current_file_path)
 root_path = os.path.join(directory_path,"..","..","..")
-sys.path.append(root_path)
+sys.path.insert(0, root_path)
 from source.exceptions.domain_task import UnknownEnterPageError
 from source.util import *
 from source.task.domain.domain_flow_upgrade import DomainFlowController
